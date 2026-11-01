@@ -24,6 +24,11 @@ import com.carlauncherthatsucks.ui.HomeScreen
 import com.carlauncherthatsucks.ui.PhoneScreen
 import com.carlauncherthatsucks.ui.SettingsScreen
 import com.carlauncherthatsucks.data.Prefs
+import com.carlauncherthatsucks.data.ApiConfig
+import com.carlauncherthatsucks.data.AssistantProvider
+import com.carlauncherthatsucks.data.VoicePhase
+import com.carlauncherthatsucks.data.VoiceUiState
+import com.carlauncherthatsucks.ui.VoiceChatScreen
 import com.carlauncherthatsucks.data.Settings
 import com.carlauncherthatsucks.data.WeatherPlace
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +62,7 @@ class Shots {
         onRequestLocation = {}, onNotificationAccess = {}, onRefreshWeather = {},
         onOpenNavigation = {}, onPlayPause = {}, onNext = {}, onPrevious = {}, onOpenPlayer = {},
         onOpenNotification = {}, onDismissNotification = {}, onDismissAll = {},
-        onApps = {}, onNavigationButton = {}, onPhone = {}, onClaude = {}, onLaunchApp = {},
+        onApps = {}, onNavigationButton = {}, onPhone = {}, assistant = AssistantProvider.CLAUDE, onAssistant = {}, onLaunchApp = {},
     )
 
     @Test fun home_dark() = paparazzi.snapshot { Themed { Home() } }
@@ -85,13 +90,33 @@ class Shots {
         Themed {
             val ctx = androidx.compose.ui.platform.LocalContext.current
             SettingsScreen(
-                settings = Settings(weatherPlace = WeatherPlace("Milano, Lombardia, Italia", 45.46, 9.19)),
+                settings = Settings(
+                    weatherPlace = WeatherPlace("Milano, Lombardia, Italia", 45.46, 9.19),
+                    assistant = AssistantProvider.OPENAI_COMPATIBLE,
+                    api = ApiConfig("https://openrouter.ai/api/v1", "sk-or-esempio", "openrouter/auto"),
+                ),
                 prefs = Prefs(ctx),
                 notificationAccess = true, locationPermission = true,
                 contactsPermission = false, callPermission = false,
                 onRequestLocation = {}, onRequestPhone = {}, onSetWeatherCity = { true },
+                onTestApi = { Result.success("ok") },
                 onNotificationAccess = {}, overlayPermission = false, onOverlayPermission = {},
                 onDefaultLauncher = {}, onAppInfo = {}, onClose = {},
+            )
+        }
+    }
+
+    @Test fun voice_chat() = paparazzi.snapshot {
+        Themed {
+            VoiceChatScreen(
+                state = VoiceUiState(
+                    phase = VoicePhase.SPEAKING,
+                    lastQuestion = "C'è traffico in tangenziale a quest'ora?",
+                    lastAnswer = "Non vedo il traffico in tempo reale, ma il venerdì sera la tangenziale è spesso " +
+                        "rallentata verso le uscite principali. CoMaps ti mostra il percorso più rapido.",
+                ),
+                config = ApiConfig("https://openrouter.ai/api/v1", "k", "openrouter/auto"),
+                onMic = {}, onNewConversation = {}, onOpenSettings = {}, onClose = {},
             )
         }
     }

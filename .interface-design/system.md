@@ -82,6 +82,8 @@ La gerarchia si fa con peso + colore (`Numeral`/`Label`/`Note`/`Off`), non solo 
 - **Dock** — pillola 72dp `Panel` raggio 36, padding 8; pulsanti a peso uguale, raggio 28, icone 26 `Label`; attivo = `BacklightDim`.
 - **PillTabs** — pillola 56dp `Panel` raggio 28, padding 4; scheda attiva `Track`, nessun bordo.
 - **WarningLampRow / StatusRow** — `Lamp()` ambra 8–10dp + titolo; dettaglio in `WarningLamp` se manca, in `Label` se ok (icona check in `Label`, non accento).
+- **VoiceChatScreen** — punto focale: pulsante microfono circolare 144dp; colore = stato (`BacklightDim` pronto, `Backlight` ascolto/lettura, `Track` attesa/errore) con anello di avanzamento 168dp mentre il modello risponde; didascalia `titleMedium`. Sotto: "TU" / "ASSISTENTE" in `labelSmall`, domanda `bodyLarge`/`Label`, risposta 20/28 `Numeral`.
+- **Preset chip** — `Surface` raggio 20, altezza ≥48, `Panel` (selezionato `BacklightDim`), riga scorrevole orizzontale.
 - **SectionTitle** — `labelSmall` maiuscolo `Label`, padding top 16.
 
 ## Movimento

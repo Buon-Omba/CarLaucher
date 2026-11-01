@@ -32,10 +32,14 @@ data class Settings(
     val recentDestinations: List<String> = emptyList(),
     val favoriteContacts: List<FavoriteContact> = emptyList(),
     val weatherPlace: WeatherPlace? = null,
+    val assistant: AssistantProvider = AssistantProvider.CLAUDE,
+    val api: ApiConfig = ApiConfig(),
 )
 
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("car_launcher", Context.MODE_PRIVATE)
+    /** Chiave API a parte: questo file è escluso dal backup (vedi res/xml, regole di backup). */
+    private val secrets = context.getSharedPreferences(SECRETS_FILE, Context.MODE_PRIVATE)
 
     private val _settings = MutableStateFlow(read())
     val settings: StateFlow<Settings> = _settings.asStateFlow()
@@ -47,6 +51,13 @@ class Prefs(context: Context) {
             .filter { it.isNotBlank() },
         favoriteContacts = decodeFavorites(sp.getString(KEY_FAVORITES, null)),
         weatherPlace = decodeWeatherPlace(sp.getString(KEY_WEATHER_PLACE, null)),
+        assistant = AssistantProvider.entries.firstOrNull { it.name == sp.getString(KEY_ASSISTANT, null) }
+            ?: AssistantProvider.CLAUDE,
+        api = ApiConfig(
+            baseUrl = sp.getString(KEY_API_URL, "").orEmpty(),
+            apiKey = secrets.getString(KEY_API_KEY, "").orEmpty(),
+            model = sp.getString(KEY_API_MODEL, "").orEmpty(),
+        ),
     )
 
     private fun write(s: Settings) {
@@ -56,7 +67,11 @@ class Prefs(context: Context) {
             .putString(KEY_RECENTS, s.recentDestinations.joinToString(SEP))
             .putString(KEY_FAVORITES, encodeFavorites(s.favoriteContacts))
             .putString(KEY_WEATHER_PLACE, s.weatherPlace?.let { encodeWeatherPlace(it) })
+            .putString(KEY_ASSISTANT, s.assistant.name)
+            .putString(KEY_API_URL, s.api.baseUrl)
+            .putString(KEY_API_MODEL, s.api.model)
             .apply()
+        secrets.edit().putString(KEY_API_KEY, s.api.apiKey).apply()
         _settings.value = s
     }
 
@@ -78,6 +93,11 @@ class Prefs(context: Context) {
         private const val KEY_RECENTS = "recents"
         private const val KEY_FAVORITES = "favorite_contacts"
         private const val KEY_WEATHER_PLACE = "weather_place"
+        private const val KEY_ASSISTANT = "assistant"
+        private const val KEY_API_URL = "api_base_url"
+        private const val KEY_API_MODEL = "api_model"
+        private const val KEY_API_KEY = "api_key"
+        const val SECRETS_FILE = "assistant_secrets"
     }
 }
 

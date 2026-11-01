@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carlauncherthatsucks.data.ApiConfig
 import com.carlauncherthatsucks.data.Prefs
 import com.carlauncherthatsucks.data.Settings
 
@@ -69,6 +70,7 @@ fun SettingsScreen(
     onRequestLocation: () -> Unit,
     onRequestPhone: () -> Unit,
     onSetWeatherCity: suspend (String) -> Boolean,
+    onTestApi: suspend (ApiConfig) -> Result<String>,
     onNotificationAccess: () -> Unit,
     overlayPermission: Boolean,
     onOverlayPermission: () -> Unit,
@@ -146,6 +148,15 @@ fun SettingsScreen(
                 Text("Cancella cronologia ricerche")
             }
         }
+
+        SectionTitle("Assistente vocale")
+        AssistantSettings(
+            provider = settings.assistant,
+            api = settings.api,
+            onProvider = { p -> prefs.update { it.copy(assistant = p) } },
+            onApi = { a -> prefs.update { it.copy(api = a) } },
+            onTestApi = onTestApi,
+        )
 
         SectionTitle("Schermo")
         Row(

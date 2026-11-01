@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MusicNote
@@ -59,6 +60,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.carlauncherthatsucks.data.AppInfo
+import com.carlauncherthatsucks.data.AssistantProvider
 import com.carlauncherthatsucks.data.CarNotification
 import com.carlauncherthatsucks.data.MediaState
 import com.carlauncherthatsucks.data.NavigationInfo
@@ -454,7 +456,8 @@ fun Dock(
     onApps: () -> Unit,
     onNavigation: () -> Unit,
     onPhone: () -> Unit,
-    onClaude: () -> Unit,
+    assistant: AssistantProvider,
+    onAssistant: () -> Unit,
     onLaunch: (AppInfo) -> Unit,
 ) {
     // Pillola 36 con padding 8 → pulsanti con raggio 28 (concentrici).
@@ -486,8 +489,12 @@ fun Dock(
                     }
                 }
             }
-            DockButton(onClaude) {
-                Icon(Icons.Filled.GraphicEq, "Chat vocale con Claude", modifier = Modifier.size(26.dp))
+            DockButton(onAssistant) {
+                Icon(
+                    if (assistant == AssistantProvider.GEMINI) Icons.Filled.AutoAwesome else Icons.Filled.GraphicEq,
+                    "Assistente vocale (${assistant.label})",
+                    modifier = Modifier.size(26.dp),
+                )
             }
         }
     }

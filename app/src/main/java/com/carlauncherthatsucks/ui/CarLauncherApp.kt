@@ -37,11 +37,14 @@ import com.carlauncherthatsucks.data.AppsRepository
 import com.carlauncherthatsucks.data.CoMaps
 import com.carlauncherthatsucks.data.NotificationStore
 import com.carlauncherthatsucks.data.Prefs
-import com.carlauncherthatsucks.data.ClaudeAssistant
+import com.carlauncherthatsucks.data.AssistantApps
+import com.carlauncherthatsucks.data.AssistantProvider
+import com.carlauncherthatsucks.data.ChatApi
+import com.carlauncherthatsucks.data.ChatMessage
 import com.carlauncherthatsucks.data.sendFromForeground
 import com.carlauncherthatsucks.drive.DriveOverlayService
 
-private enum class Overlay { NONE, APPS, SETTINGS, PHONE }
+private enum class Overlay { NONE, APPS, SETTINGS, PHONE, VOICE }
 
 @Composable
 fun CarLauncherApp(
@@ -149,7 +152,14 @@ fun CarLauncherApp(
                 if (navigation != null) openNavigation() else showSearch = true
             },
             onPhone = { overlay = Overlay.PHONE },
-            onClaude = { ClaudeAssistant.startVoice(context) },
+            assistant = settings.assistant,
+            onAssistant = {
+                when (settings.assistant) {
+                    AssistantProvider.CLAUDE -> AssistantApps.startVoice(context, AssistantApps.CLAUDE)
+                    AssistantProvider.GEMINI -> AssistantApps.startVoice(context, AssistantApps.GEMINI)
+                    AssistantProvider.OPENAI_COMPATIBLE -> overlay = Overlay.VOICE
+                }
+            },
             onLaunchApp = { AppsRepository.launch(context, it) },
         )
 
@@ -179,6 +189,9 @@ fun CarLauncherApp(
                     )
                 },
                 onSetWeatherCity = { vm.setWeatherCity(it) },
+                onTestApi = { cfg ->
+                    runCatching { ChatApi.complete(cfg, listOf(ChatMessage("user", "Rispondi solo con: ok"))) }
+                },
                 overlayPermission = overlayPermission,
                 onOverlayPermission = { openOverlaySettings(context) },
                 onNotificationAccess = { openNotificationAccess(context) },
@@ -194,6 +207,11 @@ fun CarLauncherApp(
                 onLoadContacts = { vm.loadContacts() },
                 onPermissionsChanged = { vm.refreshPermissions() },
                 onToggleFavorite = { vm.prefs.toggleFavorite(it) },
+                onClose = { overlay = Overlay.NONE },
+            )
+            Overlay.VOICE -> VoiceChatRoute(
+                config = settings.api,
+                onOpenSettings = { overlay = Overlay.SETTINGS },
                 onClose = { overlay = Overlay.NONE },
             )
             Overlay.NONE -> Unit

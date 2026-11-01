@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup e trasferimento (Android 12+): la chiave API dell'assistente non lascia il telefono. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="assistant_secrets.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="assistant_secrets.xml" />
+    </device-transfer>
+</data-extraction-rules>

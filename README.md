@@ -11,11 +11,11 @@ Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. N
 | **Meteo** | Icona + temperatura da [Open-Meteo](https://open-meteo.com) (gratuito, senza chiave). Usa GPS, rete, "fused" e posizione passiva; se non c'è nessuna posizione usa la **città di riserva** impostata nelle impostazioni. Tocca per aggiornare. |
 | **Navigazione (CoMaps)** | Pulsante nel footer: se CoMaps sta navigando apre la **modalità guida** — CoMaps a schermo intero (mappa, percorso, indicazioni) con sopra un pannello trascinabile con velocità e controlli musicali e un tasto per tornare alla home. Altrimenti apre la ricerca della destinazione (e poi la modalità guida). Richiede il permesso "mostra sopra altre app". |
 | **Telefono** | Integrato nel launcher: griglia di contatti preferiti con foto (scelti dalla rubrica) e tastierino. Un tocco = chiamata. |
-| **Claude** | Pulsante nel footer per la chat vocale: avvia la scorciatoia vocale dell'app Claude se disponibile, altrimenti apre l'app. |
+| **Assistente vocale** | Pulsante nel footer, configurabile in impostazioni: **Claude** (app, modalità vocale se disponibile), **Gemini** (app, Gemini Live se disponibile) oppure **qualsiasi API compatibile OpenAI** (`/chat/completions`): chat vocale dentro il launcher — riconoscimento vocale di sistema, risposta breve del modello letta ad alta voce, poi riascolta da solo. Preset per OpenAI, Gemini API, Claude API, OpenRouter, Ollama in rete locale. La chiave API resta sul telefono ed è esclusa dai backup. |
 | **Musica** | Copertina, titolo, artista, avanzamento e controlli ⏮ ⏯ ⏭ della sessione multimediale attiva (Spotify, VLC, YouTube Music, radio, …). |
 | **Notifiche** | Ultime notifiche (escluse quelle silenziose) con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
 | **Stile** | "Quadro strumenti di notte" su base Material You: la velocità domina in un quadrante ad arco, superfici grafite tonali, una sola retroilluminazione (il colore dinamico dello sfondo), spie ambra per gli avvisi, numeri in Barlow Semi Condensed (font ispirato alla segnaletica stradale, licenza OFL). Tema chiaro/scuro di sistema. |
-| **Footer** | App · Navigazione · Telefono · fino a 3 app fissate (tieni premuta un'app nel drawer) · Claude. Le impostazioni sono nel drawer delle app (⚙). |
+| **Footer** | App · Navigazione · Telefono · fino a 3 app fissate (tieni premuta un'app nel drawer) · Assistente vocale. Le impostazioni sono nel drawer delle app (⚙). |
 
 L'orientamento è bloccato in verticale (`screenOrientation="portrait"` + richiesta a runtime).
 

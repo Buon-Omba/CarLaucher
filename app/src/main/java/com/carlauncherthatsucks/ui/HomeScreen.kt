@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlauncherthatsucks.data.AppInfo
+import com.carlauncherthatsucks.data.AssistantProvider
 import com.carlauncherthatsucks.data.CarNotification
 import com.carlauncherthatsucks.data.MediaState
 import com.carlauncherthatsucks.data.NavigationInfo
@@ -47,7 +48,8 @@ fun HomeScreen(
     onApps: () -> Unit,
     onNavigationButton: () -> Unit,
     onPhone: () -> Unit,
-    onClaude: () -> Unit,
+    assistant: AssistantProvider,
+    onAssistant: () -> Unit,
     onLaunchApp: (AppInfo) -> Unit,
 ) {
     Column(
@@ -127,7 +129,8 @@ fun HomeScreen(
             onApps = onApps,
             onNavigation = onNavigationButton,
             onPhone = onPhone,
-            onClaude = onClaude,
+            assistant = assistant,
+            onAssistant = onAssistant,
             onLaunch = onLaunchApp,
         )
     }

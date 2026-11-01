@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup (Android 11 e precedenti): la chiave API dell'assistente non lascia il telefono. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="assistant_secrets.xml" />
+</full-backup-content>
