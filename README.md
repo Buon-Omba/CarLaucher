@@ -9,11 +9,11 @@ Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. N
 |---|---|
 | **Velocità** | km/h letti dal GPS del telefono (con stima da distanza/tempo se il chip non fornisce la velocità). |
 | **Meteo** | Icona + temperatura da [Open-Meteo](https://open-meteo.com) (gratuito, senza chiave). Usa GPS, rete, "fused" e posizione passiva; se non c'è nessuna posizione usa la **città di riserva** impostata nelle impostazioni. Tocca per aggiornare. |
-| **Navigazione (CoMaps)** | Pulsante nel footer: se CoMaps sta navigando apre una pagina a tutto schermo con la manovra (letta dalla notifica di CoMaps) e la velocità; altrimenti apre la ricerca della destinazione in CoMaps. Durante la navigazione la manovra compare anche in home. |
+| **Navigazione (CoMaps)** | Pulsante nel footer: se CoMaps sta navigando apre la **modalità guida** — CoMaps a schermo intero (mappa, percorso, indicazioni) con sopra un pannello trascinabile con velocità e controlli musicali e un tasto per tornare alla home. Altrimenti apre la ricerca della destinazione (e poi la modalità guida). Richiede il permesso "mostra sopra altre app". |
 | **Telefono** | Integrato nel launcher: griglia di contatti preferiti con foto (scelti dalla rubrica) e tastierino. Un tocco = chiamata. |
 | **Claude** | Pulsante nel footer per la chat vocale: avvia la scorciatoia vocale dell'app Claude se disponibile, altrimenti apre l'app. |
 | **Musica** | Copertina, titolo, artista, avanzamento e controlli ⏮ ⏯ ⏭ della sessione multimediale attiva (Spotify, VLC, YouTube Music, radio, …). |
-| **Notifiche** | Ultime notifiche con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
+| **Notifiche** | Ultime notifiche (escluse quelle silenziose) con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
 | **Stile** | Material You (Material 3 Expressive, come Android 16/17): colori dinamici presi dallo sfondo, tema chiaro/scuro di sistema, forme molto arrotondate, liste segmentate, pulsante play che cambia forma. |
 | **Footer** | App · Navigazione · Telefono · fino a 3 app fissate (tieni premuta un'app nel drawer) · Claude. Le impostazioni sono nel drawer delle app (⚙). |
 

@@ -66,6 +66,8 @@ fun SettingsScreen(
     onRequestPhone: () -> Unit,
     onSetWeatherCity: suspend (String) -> Boolean,
     onNotificationAccess: () -> Unit,
+    overlayPermission: Boolean,
+    onOverlayPermission: () -> Unit,
     onDefaultLauncher: () -> Unit,
     onAppInfo: () -> Unit,
     onClose: () -> Unit,
@@ -169,6 +171,7 @@ fun SettingsScreen(
         StatusRow("Posizione (velocità e meteo)", locationPermission, onRequestLocation)
         StatusRow("Accesso alle notifiche (notifiche, musica, navigazione)", notificationAccess, onNotificationAccess)
         StatusRow("Contatti e chiamate (telefono)", contactsPermission && callPermission, onRequestPhone)
+        StatusRow("Mostra sopra altre app (pannello guida su CoMaps)", overlayPermission, onOverlayPermission)
         LinkRow("Imposta come launcher predefinito", onDefaultLauncher)
         LinkRow("Informazioni app / permessi", onAppInfo)
         Text(

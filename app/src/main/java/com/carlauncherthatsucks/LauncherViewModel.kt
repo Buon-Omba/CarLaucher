@@ -16,6 +16,7 @@ import com.carlauncherthatsucks.data.Weather
 import com.carlauncherthatsucks.data.WeatherPlace
 import com.carlauncherthatsucks.data.WeatherRepository
 import com.carlauncherthatsucks.data.WeatherStatus
+import com.carlauncherthatsucks.drive.DriveOverlayService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,9 @@ class LauncherViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _contactsPermission = MutableStateFlow(false)
     val contactsPermission: StateFlow<Boolean> = _contactsPermission.asStateFlow()
+
+    private val _overlayPermission = MutableStateFlow(false)
+    val overlayPermission: StateFlow<Boolean> = _overlayPermission.asStateFlow()
 
     private val _callPermission = MutableStateFlow(false)
     val callPermission: StateFlow<Boolean> = _callPermission.asStateFlow()
@@ -95,6 +99,7 @@ class LauncherViewModel(app: Application) : AndroidViewModel(app) {
         _locationPermission.value = location.hasPermission()
         _contactsPermission.value = Contacts.canRead(ctx)
         _callPermission.value = Contacts.canCall(ctx)
+        _overlayPermission.value = DriveOverlayService.canDrawOverlays(ctx)
     }
 
     fun onLocationPermissionResult() {

@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,8 +39,9 @@ import com.carlauncherthatsucks.data.NotificationStore
 import com.carlauncherthatsucks.data.Prefs
 import com.carlauncherthatsucks.data.ClaudeAssistant
 import com.carlauncherthatsucks.data.sendFromForeground
+import com.carlauncherthatsucks.drive.DriveOverlayService
 
-private enum class Overlay { NONE, APPS, SETTINGS, PHONE, NAVIGATION }
+private enum class Overlay { NONE, APPS, SETTINGS, PHONE }
 
 @Composable
 fun CarLauncherApp(
@@ -56,6 +60,7 @@ fun CarLauncherApp(
     val contacts by vm.contacts.collectAsStateWithLifecycle()
     val contactsPermission by vm.contactsPermission.collectAsStateWithLifecycle()
     val callPermission by vm.callPermission.collectAsStateWithLifecycle()
+    val overlayPermission by vm.overlayPermission.collectAsStateWithLifecycle()
     val media by vm.media.state.collectAsStateWithLifecycle()
     val navigation by NotificationStore.navigation.collectAsStateWithLifecycle()
     val notifications by NotificationStore.notifications.collectAsStateWithLifecycle()
@@ -81,9 +86,21 @@ fun CarLauncherApp(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { vm.loadContacts() }
 
-    val openMap = {
-        val pi = navigation?.contentIntent
-        if (pi == null || !pi.sendFromForeground(context)) CoMaps.open(context)
+    // Modalità guida: CoMaps a schermo intero + pannello con velocità e musica sopra.
+    var pendingDrive by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val drive: (() -> Unit) -> Unit = { openCoMaps ->
+        if (DriveOverlayService.canDrawOverlays(context)) {
+            DriveOverlayService.start(context)
+            openCoMaps()
+        } else {
+            pendingDrive = openCoMaps
+        }
+    }
+    val openNavigation = {
+        drive {
+            val pi = navigation?.contentIntent
+            if (pi == null || !pi.sendFromForeground(context)) CoMaps.open(context)
+        }
     }
 
     // Il launcher non si "chiude" con Indietro: chiude solo i pannelli aperti.
@@ -135,7 +152,7 @@ fun CarLauncherApp(
             }
 
             navigation?.let { nav ->
-                NavigationCard(navigation = nav, onClick = { overlay = Overlay.NAVIGATION })
+                NavigationCard(navigation = nav, onClick = openNavigation)
             }
 
             MediaCard(
@@ -170,7 +187,7 @@ fun CarLauncherApp(
                 navigationActive = navigation != null,
                 onApps = { overlay = Overlay.APPS },
                 onNavigation = {
-                    if (navigation != null) overlay = Overlay.NAVIGATION else showSearch = true
+                    if (navigation != null) openNavigation() else showSearch = true
                 },
                 onPhone = { overlay = Overlay.PHONE },
                 onClaude = { ClaudeAssistant.startVoice(context) },
@@ -204,6 +221,8 @@ fun CarLauncherApp(
                     )
                 },
                 onSetWeatherCity = { vm.setWeatherCity(it) },
+                overlayPermission = overlayPermission,
+                onOverlayPermission = { openOverlaySettings(context) },
                 onNotificationAccess = { openNotificationAccess(context) },
                 onDefaultLauncher = { openHomeSettings(context) },
                 onAppInfo = { openAppInfo(context) },
@@ -219,12 +238,6 @@ fun CarLauncherApp(
                 onToggleFavorite = { vm.prefs.toggleFavorite(it) },
                 onClose = { overlay = Overlay.NONE },
             )
-            Overlay.NAVIGATION -> NavigationScreen(
-                navigation = navigation,
-                speed = speed,
-                onOpenMap = openMap,
-                onClose = { overlay = Overlay.NONE },
-            )
             Overlay.NONE -> Unit
         }
 
@@ -234,9 +247,34 @@ fun CarLauncherApp(
                 onSearch = { q ->
                     vm.prefs.addRecent(q)
                     showSearch = false
-                    CoMaps.search(context, q)
+                    drive { CoMaps.search(context, q) }
                 },
                 onDismiss = { showSearch = false },
+            )
+        }
+
+        pendingDrive?.let { open ->
+            AlertDialog(
+                onDismissRequest = { pendingDrive = null },
+                title = { Text("Pannello sopra CoMaps") },
+                text = {
+                    Text(
+                        "Per vedere velocità e controlli della musica sopra la mappa di CoMaps, " +
+                            "consenti a Car Launcher di \"mostrare sopra altre app\"."
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        pendingDrive = null
+                        openOverlaySettings(context)
+                    }) { Text("Consenti") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        pendingDrive = null
+                        open()
+                    }) { Text("Solo CoMaps") }
+                },
             )
         }
     }
@@ -253,6 +291,11 @@ private fun safeStart(context: Context, intent: Intent) {
 
 private fun openNotificationAccess(context: Context) =
     safeStart(context, Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+
+private fun openOverlaySettings(context: Context) = safeStart(
+    context,
+    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.packageName))
+)
 
 private fun openHomeSettings(context: Context) =
     safeStart(context, Intent(Settings.ACTION_HOME_SETTINGS))

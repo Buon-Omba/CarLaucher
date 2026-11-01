@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.carlauncherthatsucks.drive.DriveOverlayService
 import com.carlauncherthatsucks.ui.CarLauncherApp
 import com.carlauncherthatsucks.ui.CarTheme
 import kotlinx.coroutines.launch
@@ -78,6 +79,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Tornati al launcher: il pannello guida sopra CoMaps non serve più.
+        DriveOverlayService.stop(this)
         vm.onStart()
     }
 

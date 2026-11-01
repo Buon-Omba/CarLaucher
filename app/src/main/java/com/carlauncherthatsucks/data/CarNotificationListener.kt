@@ -1,6 +1,7 @@
 package com.carlauncherthatsucks.data
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.service.notification.NotificationListenerService
@@ -83,10 +84,31 @@ class CarNotificationListener : NotificationListenerService() {
         if ((n.flags and Notification.FLAG_GROUP_SUMMARY) != 0) return Kind.IGNORE
         // Notifiche persistenti (servizi in background, ecc.) non interessano alla guida.
         if (isOngoing(sbn)) return Kind.IGNORE
+        // Notifiche silenziose (importanza bassa/minima o "ridotte a icona"): non distraggono, non le mostriamo.
+        if (isSilent(sbn.key)) return Kind.IGNORE
         val title = n.extras?.getCharSequence(Notification.EXTRA_TITLE)
         val text = n.extras?.getCharSequence(Notification.EXTRA_TEXT)
         if (title.isNullOrBlank() && text.isNullOrBlank()) return Kind.IGNORE
         return Kind.NORMAL
+    }
+
+    private fun isSilent(key: String): Boolean {
+        val map = try {
+            currentRanking
+        } catch (_: Exception) {
+            null
+        } ?: return false
+        val ranking = NotificationListenerService.Ranking()
+        if (!map.getRanking(key, ranking)) return false
+        return ranking.isAmbient || isSilentImportance(ranking.importance)
+    }
+
+    /** Se l'utente (o l'app) rende silenziosa una notifica già mostrata, la togliamo dalla lista. */
+    override fun onNotificationRankingUpdate(rankingMap: NotificationListenerService.RankingMap) {
+        super.onNotificationRankingUpdate(rankingMap)
+        NotificationStore.notifications.value
+            .filter { isSilent(it.key) }
+            .forEach { NotificationStore.remove(it.key) }
     }
 
     private fun toCarNotification(sbn: StatusBarNotification): CarNotification? {
@@ -155,3 +177,7 @@ class CarNotificationListener : NotificationListenerService() {
         }
     }
 }
+
+/** Importanza "silenziosa": bassa, minima o nessuna (non "non specificata"). */
+fun isSilentImportance(importance: Int): Boolean =
+    importance in NotificationManager.IMPORTANCE_NONE..NotificationManager.IMPORTANCE_LOW
