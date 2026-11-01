@@ -64,3 +64,20 @@ app/src/main/java/com/carlauncherthatsucks/
 │   └── Prefs.kt
 └── ui/                        # Jetpack Compose
 ```
+
+## Pubblicazione su F-Droid
+
+Il progetto è già pronto per F-Droid:
+
+- la build di release è **non firmata** (la firma la fa F-Droid) e senza blocco "dependency info" né metadati VCS;
+- solo dipendenze libere (AndroidX, Kotlin), nessun Google Play Services; font Barlow con licenza OFL (`third_party/`);
+- descrizioni, note di versione, icona e screenshot in `fastlane/metadata/android/` (italiano e inglese);
+- metadati per `fdroiddata` in `fdroid/com.carlauncherthatsucks.yml` (verificati con `fdroid lint`, `fdroid scanner` e `fdroid build`).
+
+Passi per la pubblicazione:
+
+1. Porta queste modifiche sul branch principale e crea il tag della versione: `git tag v0.1.0 && git push origin v0.1.0`.
+2. Fai un fork di <https://gitlab.com/fdroid/fdroiddata>, copia `fdroid/com.carlauncherthatsucks.yml` in `metadata/` e apri una merge request con il modello *App inclusion*.
+3. Per le versioni successive basta aumentare `versionCode`/`versionName` in `app/build.gradle.kts`, aggiungere `fastlane/metadata/android/<lingua>/changelogs/<versionCode>.txt` e creare il tag `vX.Y.Z`: F-Droid aggiorna da solo (`UpdateCheckMode: Tags`).
+
+Per rigenerare l'icona e gli screenshot dello store: `./gradlew recordPaparazziDebug`, poi copia le immagini da `app/src/test/snapshots/images/`.
