@@ -14,7 +14,7 @@ Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. N
 | **Claude** | Pulsante nel footer per la chat vocale: avvia la scorciatoia vocale dell'app Claude se disponibile, altrimenti apre l'app. |
 | **Musica** | Copertina, titolo, artista, avanzamento e controlli ⏮ ⏯ ⏭ della sessione multimediale attiva (Spotify, VLC, YouTube Music, radio, …). |
 | **Notifiche** | Ultime notifiche (escluse quelle silenziose) con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
-| **Stile** | Material You (Material 3 Expressive, come Android 16/17): colori dinamici presi dallo sfondo, tema chiaro/scuro di sistema, forme molto arrotondate, liste segmentate, pulsante play che cambia forma. |
+| **Stile** | "Quadro strumenti di notte" su base Material You: la velocità domina in un quadrante ad arco, superfici grafite tonali, una sola retroilluminazione (il colore dinamico dello sfondo), spie ambra per gli avvisi, numeri in Barlow Semi Condensed (font ispirato alla segnaletica stradale, licenza OFL). Tema chiaro/scuro di sistema. |
 | **Footer** | App · Navigazione · Telefono · fino a 3 app fissate (tieni premuta un'app nel drawer) · Claude. Le impostazioni sono nel drawer delle app (⚙). |
 
 L'orientamento è bloccato in verticale (`screenOrientation="portrait"` + richiesta a runtime).
@@ -43,6 +43,7 @@ export ANDROID_HOME=/opt/android-sdk
 sdkmanager --licenses
 
 ./gradlew testDebugUnitTest lintDebug assembleDebug   # test, lint e APK
+./gradlew recordPaparazziDebug                        # screenshot in app/src/test/snapshots/images
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 

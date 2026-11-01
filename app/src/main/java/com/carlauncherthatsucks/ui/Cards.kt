@@ -2,7 +2,7 @@ package com.carlauncherthatsucks.ui
 
 import android.text.format.DateUtils
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,9 +26,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Navigation
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PlayArrow
@@ -35,36 +36,33 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.carlauncherthatsucks.data.AppInfo
 import com.carlauncherthatsucks.data.CarNotification
 import com.carlauncherthatsucks.data.MediaState
 import com.carlauncherthatsucks.data.NavigationInfo
+import com.carlauncherthatsucks.data.initialsOf
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -72,42 +70,34 @@ import java.util.Locale
 
 // ---------------------------------------------------------------- Navigazione
 
-/** Prossima manovra di CoMaps, mostrata in home solo durante una navigazione. */
+/**
+ * Prossima manovra di CoMaps. Durante la navigazione è il punto focale della home:
+ * unico pannello con la retroilluminazione piena.
+ */
 @Composable
-fun NavigationCard(
-    navigation: NavigationInfo,
-    onClick: () -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    CarCard(
-        Modifier.fillMaxWidth(),
-        onClick = onClick,
-        color = scheme.primary,
-        shape = MaterialTheme.shapes.extraLarge,
-        padding = 14,
-    ) {
+fun NavigationCard(navigation: NavigationInfo, onClick: () -> Unit) {
+    CarCard(Modifier.fillMaxWidth(), onClick = onClick, color = Dash.Backlight, padding = 16) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Raggio interno concentrico: 28 (pannello) − 16 (padding) = 12.
             Box(
                 Modifier
-                    .size(76.dp)
-                    .clip(RoundedCornerShape(26.dp))
-                    .background(scheme.onPrimary.copy(alpha = 0.16f)),
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(Dash.OnBacklight.copy(alpha = 0.14f)),
                 contentAlignment = Alignment.Center,
             ) {
                 val icon = navigation.turnIcon
                 if (icon != null) {
-                    Image(icon.asImageBitmap(), contentDescription = null, modifier = Modifier.size(60.dp))
+                    Image(icon.asImageBitmap(), contentDescription = null, modifier = Modifier.size(52.dp))
                 } else {
-                    Icon(Icons.Filled.Navigation, null, modifier = Modifier.size(44.dp))
+                    Icon(Icons.Filled.Navigation, null, modifier = Modifier.size(36.dp))
                 }
             }
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    navigation.title.ifBlank { "Navigazione in corso" },
-                    fontSize = 28.sp,
-                    lineHeight = 30.sp,
-                    fontWeight = FontWeight.Bold,
+                    navigation.title.ifBlank { "In navigazione" },
+                    style = MaterialTheme.typography.headlineMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -123,6 +113,7 @@ fun NavigationCard(
                     Text(
                         navigation.subText,
                         style = MaterialTheme.typography.bodyMedium,
+                        color = Dash.OnBacklight.copy(alpha = 0.78f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -143,76 +134,59 @@ fun MediaCard(
     onPrevious: () -> Unit,
     onOpen: () -> Unit,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    CarCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, padding = 14) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    CarCard(Modifier.fillMaxWidth(), padding = 16) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .clickable(onClick = onOpen),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Copertina: raggio concentrico 28 − 16 = 12.
             Box(
                 Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(scheme.secondaryContainer)
-                    .clickable(onClick = onOpen),
+                    .size(56.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(Dash.Track),
                 contentAlignment = Alignment.Center,
             ) {
                 val art = media?.art
                 if (art != null) {
-                    Image(
-                        art.asImageBitmap(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    Image(art.asImageBitmap(), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 } else {
-                    Icon(
-                        Icons.Filled.MusicNote, null,
-                        tint = scheme.onSecondaryContainer, modifier = Modifier.size(36.dp),
-                    )
+                    Icon(Icons.Filled.MusicNote, null, tint = Dash.Note, modifier = Modifier.size(28.dp))
                 }
             }
-            Spacer(Modifier.width(14.dp))
-            Column(
-                Modifier
-                    .weight(1f)
-                    .clickable(onClick = onOpen)
-            ) {
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
                 when {
                     media != null -> {
                         Text(
                             media.title.ifBlank { media.appLabel },
                             style = MaterialTheme.typography.titleLarge,
+                            color = Dash.Numeral,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            listOf(media.artist, media.album).filter { it.isNotBlank() }
-                                .joinToString(" · ").ifBlank { " " },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = scheme.onSurfaceVariant,
+                            listOf(media.artist, media.appLabel).filter { it.isNotBlank() }.joinToString(" · "),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Dash.Label,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            media.appLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.primary,
-                            maxLines = 1,
                         )
                     }
                     !hasAccess -> {
-                        Text("Musica", style = MaterialTheme.typography.titleLarge)
+                        Text("Musica", style = MaterialTheme.typography.titleLarge, color = Dash.Label)
                         Text(
-                            "Concedi l'accesso alle notifiche per controllare la riproduzione",
+                            "Serve l'accesso alle notifiche",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = scheme.onSurfaceVariant,
+                            color = Dash.Note,
                         )
                     }
                     else -> {
-                        Text("Nessuna riproduzione", style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            "Tocca per aprire il lettore musicale",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = scheme.onSurfaceVariant,
-                        )
+                        Text("Niente in riproduzione", style = MaterialTheme.typography.titleLarge, color = Dash.Label)
+                        Text("Tocca per aprire il lettore", style = MaterialTheme.typography.bodyMedium, color = Dash.Note)
                     }
                 }
             }
@@ -221,69 +195,74 @@ fun MediaCard(
         if (media != null && media.durationMs > 0) {
             val position by rememberPlaybackPosition(media)
             Spacer(Modifier.height(12.dp))
-            LinearProgressIndicator(
-                progress = { (position.toFloat() / media.durationMs).coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                color = scheme.primary,
-                trackColor = scheme.secondaryContainer,
-            )
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
-                Text(formatDuration(position), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
-                Spacer(Modifier.weight(1f))
-                Text(formatDuration(media.durationMs), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
-            }
-        } else {
-            Spacer(Modifier.height(10.dp))
+            ProgressLine((position.toFloat() / media.durationMs).coerceIn(0f, 1f))
         }
 
+        Spacer(Modifier.height(12.dp))
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilledTonalIconButton(
-                onClick = onPrevious,
-                enabled = media?.canSkipPrevious == true,
-                modifier = Modifier.size(width = 76.dp, height = 60.dp),
-                shape = RoundedCornerShape(20.dp),
-            ) {
-                Icon(Icons.Filled.SkipPrevious, "Precedente", modifier = Modifier.size(34.dp))
-            }
+            TransportButton(Icons.Filled.SkipPrevious, "Precedente", media?.canSkipPrevious == true, onPrevious)
 
-            // Stile "expressive": il pulsante cambia forma (cerchio ↔ quadrato arrotondato).
+            // Controllo principale, in tinta tenue (il pieno è riservato a quadrante e manovra). Cambia forma: cerchio in pausa, quadrato morbido in riproduzione.
             val playing = media?.isPlaying == true
             val corner by animateDpAsState(
-                targetValue = if (playing) 22.dp else 40.dp,
-                animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
+                targetValue = if (playing) 16.dp else 28.dp,
+                animationSpec = tween(durationMillis = 180, easing = EaseOutDash),
                 label = "playShape",
             )
             Surface(
                 onClick = { if (media != null) onPlayPause() else onOpen() },
-                modifier = Modifier.size(width = 104.dp, height = 72.dp),
+                modifier = Modifier.size(width = 88.dp, height = 56.dp),
                 shape = RoundedCornerShape(corner),
-                color = scheme.primary,
-                contentColor = scheme.onPrimary,
+                color = if (media != null) Dash.BacklightDim else Dash.Track,
+                contentColor = if (media != null) Dash.OnBacklightDim else Dash.Label,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = "Play/Pausa",
-                        modifier = Modifier.size(42.dp),
+                        contentDescription = if (playing) "Pausa" else "Riproduci",
+                        modifier = Modifier.size(32.dp),
                     )
                 }
             }
 
-            FilledTonalIconButton(
-                onClick = onNext,
-                enabled = media?.canSkipNext == true,
-                modifier = Modifier.size(width = 76.dp, height = 60.dp),
-                shape = RoundedCornerShape(20.dp),
-            ) {
-                Icon(Icons.Filled.SkipNext, "Successiva", modifier = Modifier.size(34.dp))
-            }
+            TransportButton(Icons.Filled.SkipNext, "Successiva", media?.canSkipNext == true, onNext)
         }
+    }
+}
+
+@Composable
+private fun TransportButton(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(width = 72.dp, height = 56.dp),
+        colors = IconButtonDefaults.iconButtonColors(contentColor = Dash.Numeral, disabledContentColor = Dash.Off),
+    ) {
+        Icon(icon, label, modifier = Modifier.size(32.dp))
+    }
+}
+
+/** Avanzamento: una linea sottile e neutra, l'accento resta al quadrante e al play. */
+@Composable
+private fun ProgressLine(fraction: Float) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(3.dp)
+            .clip(CircleShape)
+            .background(Dash.Track)
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth(fraction)
+                .height(3.dp)
+                .clip(CircleShape)
+                .background(Dash.Label)
+        )
     }
 }
 
@@ -302,8 +281,9 @@ private fun rememberPlaybackPosition(media: MediaState): State<Long> {
 
 // ---------------------------------------------------------------- Notifiche
 
+/** Lista delle notifiche: niente pannello attorno, la struttura la fanno le righe tonali. */
 @Composable
-fun NotificationsCard(
+fun NotificationsList(
     notifications: List<CarNotification>,
     hasAccess: Boolean,
     onGrantAccess: () -> Unit,
@@ -312,36 +292,26 @@ fun NotificationsCard(
     onDismissAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    CarCard(modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, padding = 12) {
+    Column(modifier.fillMaxWidth()) {
         Row(
-            Modifier.padding(start = 6.dp),
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 40.dp)
+                .padding(start = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Filled.Notifications, null, tint = scheme.primary, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Notifiche", style = MaterialTheme.typography.titleMedium)
-            if (notifications.isNotEmpty()) {
+            Text("NOTIFICHE", style = MaterialTheme.typography.labelSmall, color = Dash.Label)
+            if (hasAccess && notifications.isNotEmpty()) {
                 Spacer(Modifier.width(8.dp))
-                Box(
-                    Modifier
-                        .clip(CircleShape)
-                        .background(scheme.primary)
-                        .padding(horizontal = 8.dp, vertical = 1.dp)
-                ) {
-                    Text(
-                        "${notifications.size}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = scheme.onPrimary,
-                    )
-                }
+                Text("${notifications.size}", style = MaterialTheme.typography.labelSmall, color = Dash.Note)
             }
             Spacer(Modifier.weight(1f))
-            if (notifications.any { it.clearable }) {
-                TextButton(onClick = onDismissAll) { Text("Cancella tutte") }
+            if (hasAccess && notifications.any { it.clearable }) {
+                TextButton(onClick = onDismissAll, modifier = Modifier.heightIn(min = 40.dp)) {
+                    Text("Cancella tutte", style = MaterialTheme.typography.labelLarge, color = Dash.Label)
+                }
             }
         }
-        Spacer(Modifier.height(4.dp))
 
         when {
             !hasAccess -> Column(
@@ -352,12 +322,14 @@ fun NotificationsCard(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    "Per mostrare le notifiche serve l'accesso alle notifiche.",
+                    "Serve l'accesso alle notifiche",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = scheme.onSurfaceVariant,
+                    color = Dash.Note,
                 )
-                Spacer(Modifier.height(8.dp))
-                FilledTonalButton(onClick = onGrantAccess) { Text("Concedi accesso") }
+                Spacer(Modifier.height(12.dp))
+                FilledTonalButton(onClick = onGrantAccess, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Concedi accesso")
+                }
             }
             notifications.isEmpty() -> Box(
                 Modifier
@@ -365,24 +337,19 @@ fun NotificationsCard(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    "Nessuna notifica",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = scheme.onSurfaceVariant,
-                )
+                Text("Nessuna notifica", style = MaterialTheme.typography.bodyMedium, color = Dash.Note)
             }
             else -> LazyColumn(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clip(RoundedCornerShape(24.dp)),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+                    .clip(MaterialTheme.shapes.medium),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 itemsIndexed(notifications, key = { _, n -> n.key }) { index, n ->
                     NotificationRow(
                         n,
-                        index = index,
-                        count = notifications.size,
+                        shape = segmentedShape(index, notifications.size),
                         onOpen = { onOpen(n) },
                         onDismiss = { onDismiss(n) },
                     )
@@ -395,58 +362,41 @@ fun NotificationsCard(
 @Composable
 private fun NotificationRow(
     n: CarNotification,
-    index: Int,
-    count: Int,
+    shape: androidx.compose.ui.graphics.Shape,
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    Surface(
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-        shape = segmentedShape(index, count),
-        color = scheme.surfaceContainerHighest,
-        contentColor = scheme.onSurface,
-    ) {
+    Surface(onClick = onOpen, modifier = Modifier.fillMaxWidth(), shape = shape, color = Dash.Panel) {
         Row(
-            Modifier.padding(start = 12.dp, top = 10.dp, bottom = 10.dp),
+            Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val icon = n.largeIcon ?: n.appIcon
             if (icon != null) {
                 Image(
-                    icon.asImageBitmap(),
-                    contentDescription = null,
+                    icon.asImageBitmap(), null,
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(40.dp)
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop,
                 )
             } else {
-                Icon(Icons.Filled.Notifications, null, modifier = Modifier.size(42.dp))
+                Monogram(n.title.ifBlank { n.appLabel })
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        n.appLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = scheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    Text(
-                        " · " + formatPostTime(n.postTime),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = scheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                }
+                Text(
+                    "${n.appLabel} · ${formatPostTime(n.postTime)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Dash.Note,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 if (n.title.isNotBlank()) {
                     Text(
                         n.title,
                         style = MaterialTheme.typography.titleMedium,
+                        color = Dash.Numeral,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -455,15 +405,15 @@ private fun NotificationRow(
                     Text(
                         n.text,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = scheme.onSurfaceVariant,
+                        color = Dash.Label,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
             if (n.clearable) {
-                IconButton(onClick = onDismiss, modifier = Modifier.size(52.dp)) {
-                    Icon(Icons.Filled.Close, "Elimina", tint = scheme.onSurfaceVariant)
+                IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Filled.Close, "Elimina", tint = Dash.Note, modifier = Modifier.size(20.dp))
                 }
             } else {
                 Spacer(Modifier.width(12.dp))
@@ -472,17 +422,30 @@ private fun NotificationRow(
     }
 }
 
-private fun formatPostTime(time: Long): String {
-    val now = System.currentTimeMillis()
-    return if (DateUtils.isToday(time)) {
-        if (now - time < 60_000L) "ora"
-        else SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(time))
-    } else {
-        SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(time))
+/** Iniziali su fondo tonale, al posto di un'icona generica. */
+@Composable
+fun Monogram(name: String, size: androidx.compose.ui.unit.Dp = 40.dp) {
+    Box(
+        Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(Dash.Track),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(initialsOf(name), style = MaterialTheme.typography.titleSmall, color = Dash.Label)
     }
 }
 
-// ---------------------------------------------------------------- Dock
+private fun formatPostTime(time: Long): String {
+    val now = System.currentTimeMillis()
+    return if (DateUtils.isToday(time)) {
+        if (now - time < 60_000L) "ora" else SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(time))
+    } else {
+        SimpleDateFormat("d MMM", Locale.getDefault()).format(Date(time))
+    }
+}
+
+// ---------------------------------------------------------------- Footer
 
 @Composable
 fun Dock(
@@ -494,42 +457,37 @@ fun Dock(
     onClaude: () -> Unit,
     onLaunch: (AppInfo) -> Unit,
 ) {
-    val scheme = MaterialTheme.colorScheme
+    // Pillola 36 con padding 8 → pulsanti con raggio 28 (concentrici).
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(72.dp),
-        shape = RoundedCornerShape(36.dp),
-        color = scheme.surfaceContainerHigh,
-        contentColor = scheme.onSurface,
+        shape = MaterialTheme.shapes.extraLarge,
+        color = Dash.Panel,
+        contentColor = Dash.Numeral,
     ) {
-        Row(
-            Modifier.padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            DockButton(onApps, highlighted = true) {
-                Icon(Icons.Filled.Apps, "App", modifier = Modifier.size(28.dp))
-            }
-            DockButton(onNavigation, highlighted = navigationActive, accent = navigationActive) {
+        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            DockButton(onApps) { Icon(Icons.Filled.Apps, "App", modifier = Modifier.size(26.dp)) }
+            DockButton(onNavigation, lit = navigationActive) {
                 Icon(
                     if (navigationActive) Icons.Filled.Navigation else Icons.Filled.Search,
                     if (navigationActive) "Navigazione in corso" else "Cerca destinazione",
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(26.dp),
                 )
             }
-            DockButton(onPhone) { Icon(Icons.Filled.Phone, "Telefono", modifier = Modifier.size(28.dp)) }
+            DockButton(onPhone) { Icon(Icons.Filled.Phone, "Telefono", modifier = Modifier.size(26.dp)) }
             dockApps.forEach { app ->
                 DockButton({ onLaunch(app) }) {
                     val icon = app.icon
                     if (icon != null) {
-                        Image(icon.asImageBitmap(), app.label, modifier = Modifier.size(40.dp))
+                        Image(icon.asImageBitmap(), app.label, modifier = Modifier.size(36.dp))
                     } else {
-                        Text(app.label.take(2), style = MaterialTheme.typography.titleMedium)
+                        Text(app.label.take(2), style = MaterialTheme.typography.titleSmall)
                     }
                 }
             }
             DockButton(onClaude) {
-                Icon(Icons.Filled.GraphicEq, "Chat vocale con Claude", modifier = Modifier.size(28.dp))
+                Icon(Icons.Filled.GraphicEq, "Chat vocale con Claude", modifier = Modifier.size(26.dp))
             }
         }
     }
@@ -538,28 +496,18 @@ fun Dock(
 @Composable
 private fun RowScope.DockButton(
     onClick: () -> Unit,
-    highlighted: Boolean = false,
-    accent: Boolean = false,
+    lit: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.size(width = 56.dp, height = 52.dp),
-            shape = RoundedCornerShape(26.dp),
-            color = when {
-                accent -> scheme.primary
-                highlighted -> scheme.primaryContainer
-                else -> Color.Transparent
-            },
-            contentColor = when {
-                accent -> scheme.onPrimary
-                highlighted -> scheme.onPrimaryContainer
-                else -> scheme.onSurface
-            },
-        ) {
-            Box(contentAlignment = Alignment.Center) { content() }
-        }
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxSize(),
+        shape = RoundedCornerShape(28.dp),
+        color = if (lit) Dash.BacklightDim else Color.Transparent,
+        contentColor = if (lit) Dash.OnBacklightDim else Dash.Label,
+    ) {
+        Box(contentAlignment = Alignment.Center) { content() }
     }
 }

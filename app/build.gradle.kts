@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    // Screenshot delle schermate Compose sulla JVM (verifica visiva senza emulatore).
+    id("app.cash.paparazzi")
 }
 
 android {

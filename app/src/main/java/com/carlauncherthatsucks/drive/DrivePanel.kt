@@ -1,6 +1,7 @@
 package com.carlauncherthatsucks.drive
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -17,13 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,18 +34,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlauncherthatsucks.data.MediaState
 import com.carlauncherthatsucks.data.SpeedState
+import com.carlauncherthatsucks.ui.Dash
+import com.carlauncherthatsucks.ui.EaseOutDash
+import com.carlauncherthatsucks.ui.SpeedDial
 import kotlinx.coroutines.flow.StateFlow
 
-/** Pannello compatto mostrato sopra CoMaps: velocità, musica, ritorno alla home. */
+/**
+ * Pannello sopra CoMaps: piccolo quadrante, brano e comandi, ritorno alla home.
+ * Unica superficie con ombra: galleggia sopra la mappa di un'altra app.
+ */
 @Composable
 fun DrivePanel(
     speedFlow: StateFlow<SpeedState>,
@@ -58,23 +63,23 @@ fun DrivePanel(
 ) {
     val speed by speedFlow.collectAsState()
     val media by mediaFlow.collectAsState()
-    val scheme = MaterialTheme.colorScheme
+    val m = media
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = scheme.surfaceContainerHigh.copy(alpha = 0.96f),
-        contentColor = scheme.onSurface,
-        shadowElevation = 8.dp,
+        shape = MaterialTheme.shapes.extraLarge,
+        color = Dash.Panel,
+        contentColor = Dash.Numeral,
+        shadowElevation = 6.dp,
     ) {
-        Column(Modifier.padding(start = 10.dp, end = 10.dp, bottom = 10.dp)) {
-            // Maniglia: trascina per spostare il pannello e non coprire i comandi di CoMaps.
+        Column(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)) {
+            // Maniglia: trascina per non coprire i comandi di CoMaps.
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(22.dp)
+                    .height(20.dp)
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragEnd = onDragEnd,
@@ -88,109 +93,88 @@ fun DrivePanel(
             ) {
                 Box(
                     Modifier
-                        .size(width = 40.dp, height = 5.dp)
+                        .size(width = 36.dp, height = 4.dp)
                         .clip(CircleShape)
-                        .background(scheme.onSurfaceVariant.copy(alpha = 0.5f))
+                        .background(Dash.Off)
                 )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Velocità
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = scheme.primaryContainer,
-                    contentColor = scheme.onPrimaryContainer,
-                    modifier = Modifier.size(width = 96.dp, height = 76.dp),
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            speed.kmh?.toString() ?: "--",
-                            fontSize = 38.sp,
-                            lineHeight = 38.sp,
-                            fontWeight = FontWeight.Black,
-                        )
-                        Text("km/h", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-                Spacer(Modifier.width(10.dp))
+                SpeedDial(
+                    speed = speed,
+                    diameter = 84.dp,
+                    numeralStyle = MaterialTheme.typography.headlineMedium.copy(fontSize = 32.sp, lineHeight = 32.sp),
+                    unitStyle = MaterialTheme.typography.labelSmall,
+                    stroke = 5.dp,
+                    showTicks = false,
+                )
+                Spacer(Modifier.width(12.dp))
 
-                // Musica
-                val m = media
                 Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val art = m?.art
-                        if (art != null) {
-                            Image(
-                                art.asImageBitmap(), null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(22.dp)
-                                    .clip(RoundedCornerShape(6.dp)),
-                            )
-                        } else {
-                            Icon(Icons.Filled.MusicNote, null, modifier = Modifier.size(18.dp), tint = scheme.primary)
-                        }
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            when {
-                                m == null -> "Nessuna riproduzione"
-                                m.artist.isNotBlank() -> "${m.title} · ${m.artist}"
-                                else -> m.title.ifBlank { m.appLabel }
-                            },
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                    Text(
+                        when {
+                            m == null -> "Niente in riproduzione"
+                            else -> m.title.ifBlank { m.appLabel }
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (m == null) Dash.Note else Dash.Numeral,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        PanelTransport(Icons.Filled.SkipPrevious, "Precedente", m?.canSkipPrevious == true, onPrevious)
+                        val playing = m?.isPlaying == true
+                        val corner by animateDpAsState(
+                            targetValue = if (playing) 14.dp else 24.dp,
+                            animationSpec = tween(durationMillis = 180, easing = EaseOutDash),
+                            label = "panelPlay",
                         )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilledTonalIconButton(
-                            onClick = onPrevious,
-                            enabled = m?.canSkipPrevious == true,
-                            modifier = Modifier.size(width = 52.dp, height = 46.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ) { Icon(Icons.Filled.SkipPrevious, "Precedente", modifier = Modifier.size(28.dp)) }
                         Surface(
                             onClick = onPlayPause,
                             enabled = m != null,
-                            modifier = Modifier.size(width = 64.dp, height = 46.dp),
-                            shape = RoundedCornerShape(if (m?.isPlaying == true) 14.dp else 23.dp),
-                            color = scheme.primary,
-                            contentColor = scheme.onPrimary,
+                            modifier = Modifier.size(width = 64.dp, height = 48.dp),
+                            shape = RoundedCornerShape(corner),
+                            color = if (m != null) Dash.BacklightDim else Dash.Track,
+                            contentColor = if (m != null) Dash.OnBacklightDim else Dash.Off,
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    if (m?.isPlaying == true) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    "Play/Pausa",
-                                    modifier = Modifier.size(30.dp),
+                                    if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    if (playing) "Pausa" else "Riproduci",
+                                    modifier = Modifier.size(28.dp),
                                 )
                             }
                         }
-                        FilledTonalIconButton(
-                            onClick = onNext,
-                            enabled = m?.canSkipNext == true,
-                            modifier = Modifier.size(width = 52.dp, height = 46.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ) { Icon(Icons.Filled.SkipNext, "Successiva", modifier = Modifier.size(28.dp)) }
+                        PanelTransport(Icons.Filled.SkipNext, "Successiva", m?.canSkipNext == true, onNext)
                     }
                 }
 
-                // Torna al launcher
-                Surface(
+                // Torna al launcher.
+                IconButton(
                     onClick = onHome,
-                    modifier = Modifier.size(52.dp),
-                    shape = CircleShape,
-                    color = scheme.secondaryContainer,
-                    contentColor = scheme.onSecondaryContainer,
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = Dash.Label),
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.Home, "Torna alla home", modifier = Modifier.size(28.dp))
-                    }
+                    Icon(Icons.Filled.Home, "Torna alla home", modifier = Modifier.size(26.dp))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PanelTransport(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(48.dp),
+        colors = IconButtonDefaults.iconButtonColors(contentColor = Dash.Numeral, disabledContentColor = Dash.Off),
+    ) {
+        Icon(icon, label, modifier = Modifier.size(28.dp))
     }
 }

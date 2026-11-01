@@ -109,91 +109,49 @@ fun CarLauncherApp(
     val dockApps = settings.dockApps.mapNotNull { id -> apps.firstOrNull { it.id == id } }
         .take(Prefs.MAX_DOCK)
 
-    Surface(color = CarColors.Background, contentColor = CarColors.TextPrimary) {
+    Surface(color = Dash.Asphalt, contentColor = Dash.Numeral) {
     Box(
         Modifier
             .fillMaxSize()
             .safeDrawingPadding()
     ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (!locationPermission || !notificationAccess) {
-                PermissionBanner(
-                    needsLocation = !locationPermission,
-                    needsNotifications = !notificationAccess,
-                    onLocation = requestLocationPermission,
-                    onNotifications = { openNotificationAccess(context) },
-                )
-            }
-
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SpeedIndicator(speed = speed, modifier = Modifier.weight(1.15f))
-                Column(
-                    Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    ClockCard(Modifier.weight(1f))
-                    WeatherIndicator(
-                        weather = weather,
-                        status = weatherStatus,
-                        onClick = { vm.refreshWeatherNow() },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-
-            navigation?.let { nav ->
-                NavigationCard(navigation = nav, onClick = openNavigation)
-            }
-
-            MediaCard(
-                media = media,
-                hasAccess = notificationAccess,
-                onPlayPause = vm.media::playPause,
-                onNext = vm.media::next,
-                onPrevious = vm.media::previous,
-                onOpen = vm.media::openPlayer,
-            )
-
-            NotificationsCard(
-                notifications = notifications,
-                hasAccess = notificationAccess,
-                onGrantAccess = { openNotificationAccess(context) },
-                onOpen = { n ->
-                    val ok = n.contentIntent?.sendFromForeground(context) == true
-                    if (!ok) {
-                        context.packageManager.getLaunchIntentForPackage(n.packageName)?.let {
-                            context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                        }
+        HomeScreen(
+            speed = speed,
+            weather = weather,
+            weatherStatus = weatherStatus,
+            navigation = navigation,
+            media = media,
+            notifications = notifications,
+            dockApps = dockApps,
+            locationPermission = locationPermission,
+            notificationAccess = notificationAccess,
+            onRequestLocation = requestLocationPermission,
+            onNotificationAccess = { openNotificationAccess(context) },
+            onRefreshWeather = { vm.refreshWeatherNow() },
+            onOpenNavigation = openNavigation,
+            onPlayPause = vm.media::playPause,
+            onNext = vm.media::next,
+            onPrevious = vm.media::previous,
+            onOpenPlayer = vm.media::openPlayer,
+            onOpenNotification = { n ->
+                val ok = n.contentIntent?.sendFromForeground(context) == true
+                if (!ok) {
+                    context.packageManager.getLaunchIntentForPackage(n.packageName)?.let {
+                        context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     }
-                    if (n.clearable) NotificationStore.dismiss(n.key)
-                },
-                onDismiss = { NotificationStore.dismiss(it.key) },
-                onDismissAll = { NotificationStore.dismissAll() },
-                modifier = Modifier.weight(1f),
-            )
-
-            Dock(
-                dockApps = dockApps,
-                navigationActive = navigation != null,
-                onApps = { overlay = Overlay.APPS },
-                onNavigation = {
-                    if (navigation != null) openNavigation() else showSearch = true
-                },
-                onPhone = { overlay = Overlay.PHONE },
-                onClaude = { ClaudeAssistant.startVoice(context) },
-                onLaunch = { AppsRepository.launch(context, it) },
-            )
-        }
+                }
+                if (n.clearable) NotificationStore.dismiss(n.key)
+            },
+            onDismissNotification = { NotificationStore.dismiss(it.key) },
+            onDismissAll = { NotificationStore.dismissAll() },
+            onApps = { overlay = Overlay.APPS },
+            onNavigationButton = {
+                if (navigation != null) openNavigation() else showSearch = true
+            },
+            onPhone = { overlay = Overlay.PHONE },
+            onClaude = { ClaudeAssistant.startVoice(context) },
+            onLaunchApp = { AppsRepository.launch(context, it) },
+        )
 
         when (overlay) {
             Overlay.APPS -> AppDrawer(

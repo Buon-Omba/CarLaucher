@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -61,9 +62,9 @@ fun AppDrawer(
     Column(
         Modifier
             .fillMaxSize()
-            .background(CarColors.Background)
+            .background(Dash.Asphalt)
             .blockTouches()
-            .padding(10.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
@@ -84,9 +85,9 @@ fun AppDrawer(
         }
         Text(
             "Tieni premuto un'app per fissarla nella barra in basso (max ${Prefs.MAX_DOCK})",
-            fontSize = 12.sp,
-            color = CarColors.TextSecondary,
-            modifier = Modifier.padding(vertical = 6.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = Dash.Note,
+            modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 8.dp),
         )
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
@@ -100,7 +101,7 @@ fun AppDrawer(
                 Column(
                     Modifier
                         .clip(RoundedCornerShape(24.dp))
-                        .background(if (pinned) CarColors.AccentDim else CarColors.Background)
+                        .background(if (pinned) Dash.BacklightDim else Dash.Asphalt)
                         .combinedClickable(
                             onClick = { onLaunch(app) },
                             onLongClick = { onToggleDock(app) },
@@ -117,13 +118,13 @@ fun AppDrawer(
                                 Modifier
                                     .size(56.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(CarColors.CardHigh)
+                                    .background(Dash.Track)
                             )
                         }
                         if (pinned) {
                             Icon(
                                 Icons.Filled.PushPin, "Fissata",
-                                tint = CarColors.Accent,
+                                tint = Dash.Backlight,
                                 modifier = Modifier
                                     .size(18.dp)
                                     .align(Alignment.TopEnd),

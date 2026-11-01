@@ -42,6 +42,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -87,14 +91,14 @@ fun SettingsScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(CarColors.Background)
+            .background(Dash.Asphalt)
             .blockTouches()
-            .padding(12.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Impostazioni", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text("Impostazioni", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
             IconButton(onClick = onClose, modifier = Modifier.size(60.dp)) {
                 Icon(Icons.Filled.Close, "Chiudi", modifier = Modifier.size(32.dp))
             }
@@ -104,8 +108,8 @@ fun SettingsScreen(
         Text(
             "Il meteo usa la tua posizione. Se il telefono non ne trova una (GPS al chiuso, nessun " +
                 "servizio di localizzazione di rete), usa questa città.",
-            fontSize = 13.sp,
-            color = CarColors.TextSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Dash.Label,
         )
         OutlinedTextField(
             value = city,
@@ -147,18 +151,18 @@ fun SettingsScreen(
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(CarColors.Card)
+                .clip(MaterialTheme.shapes.medium)
+                .background(Dash.Panel)
                 .clickable { prefs.update { it.copy(keepScreenOn = !it.keepScreenOn) } }
-                .padding(14.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Mantieni lo schermo acceso", fontSize = 16.sp)
+                Text("Mantieni lo schermo acceso", style = MaterialTheme.typography.titleMedium)
                 Text(
                     "Mentre il launcher è in primo piano",
-                    fontSize = 13.sp,
-                    color = CarColors.TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Dash.Label,
                 )
             }
             Switch(
@@ -167,70 +171,84 @@ fun SettingsScreen(
             )
         }
 
-        SectionTitle("Permessi e sistema")
-        StatusRow("Posizione (velocità e meteo)", locationPermission, onRequestLocation)
-        StatusRow("Accesso alle notifiche (notifiche, musica, navigazione)", notificationAccess, onNotificationAccess)
-        StatusRow("Contatti e chiamate (telefono)", contactsPermission && callPermission, onRequestPhone)
-        StatusRow("Mostra sopra altre app (pannello guida su CoMaps)", overlayPermission, onOverlayPermission)
-        LinkRow("Imposta come launcher predefinito", onDefaultLauncher)
-        LinkRow("Informazioni app / permessi", onAppInfo)
+        SectionTitle("Permessi")
+        val permissions = listOf(
+            Triple("Posizione", "Velocità e meteo", locationPermission) to onRequestLocation,
+            Triple("Accesso alle notifiche", "Notifiche, musica, manovre di CoMaps", notificationAccess) to onNotificationAccess,
+            Triple("Contatti e chiamate", "Preferiti del telefono", contactsPermission && callPermission) to onRequestPhone,
+            Triple("Mostra sopra altre app", "Pannello guida sopra CoMaps", overlayPermission) to onOverlayPermission,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            permissions.forEachIndexed { i, (info, action) ->
+                StatusRow(info.first, info.second, info.third, segmentedShape(i, permissions.size), action)
+            }
+        }
+        SectionTitle("Sistema")
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LinkRow("Imposta come launcher predefinito", segmentedShape(0, 2), onDefaultLauncher)
+            LinkRow("Informazioni app", segmentedShape(1, 2), onAppInfo)
+        }
         Text(
             "Se l'accesso alle notifiche è disattivato e non si attiva: apri \"Informazioni app\", " +
                 "menu ⋮ → \"Consenti impostazioni con restrizioni\" (Android 13+ per le app installate da APK).",
-            fontSize = 12.sp,
-            color = CarColors.TextSecondary,
+            style = MaterialTheme.typography.bodySmall,
+            color = Dash.Note,
         )
     }
 }
 
+/** Intestazione di sezione: piccola, spaziata, maiuscola — come le scritte del cruscotto. */
 @Composable
 private fun SectionTitle(text: String) {
     Text(
-        text,
-        fontSize = 15.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = CarColors.Accent,
-        modifier = Modifier.padding(top = 8.dp),
+        text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = Dash.Label,
+        modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 4.dp),
     )
 }
 
 @Composable
-private fun StatusRow(label: String, ok: Boolean, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(CarColors.Card)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            if (ok) Icons.Filled.CheckCircle else Icons.Filled.Warning,
-            null,
-            tint = if (ok) CarColors.Accent else CarColors.Warning,
-        )
-        Spacer(Modifier.width(12.dp))
-        Text(label, fontSize = 15.sp, modifier = Modifier.weight(1f))
-        Icon(Icons.Filled.ChevronRight, null, tint = CarColors.TextSecondary)
+private fun StatusRow(title: String, detail: String, ok: Boolean, shape: Shape, onClick: () -> Unit) {
+    Surface(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = shape, color = Dash.Panel) {
+        Row(
+            Modifier
+                .heightIn(min = 64.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Spia: ambra se manca, spenta se è tutto a posto.
+            if (ok) {
+                Icon(Icons.Filled.CheckCircle, "Concesso", tint = Dash.Label, modifier = Modifier.size(20.dp))
+            } else {
+                Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) { Lamp(size = 10.dp) }
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = Dash.Numeral)
+                Text(
+                    if (ok) detail else "Da concedere · $detail",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (ok) Dash.Label else Dash.WarningLamp,
+                )
+            }
+            Icon(Icons.Filled.ChevronRight, null, tint = Dash.Note)
+        }
     }
 }
 
 @Composable
-private fun LinkRow(label: String, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(CarColors.Card)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, fontSize = 15.sp, modifier = Modifier.weight(1f))
-        Icon(Icons.Filled.ChevronRight, null, tint = CarColors.TextSecondary)
+private fun LinkRow(label: String, shape: Shape, onClick: () -> Unit) {
+    Surface(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = shape, color = Dash.Panel) {
+        Row(
+            Modifier
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.ChevronRight, null, tint = Dash.Note)
+        }
     }
 }
 
@@ -278,7 +296,7 @@ fun DestinationDialog(
                             .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Filled.History, null, tint = CarColors.TextSecondary)
+                        Icon(Icons.Filled.History, null, tint = Dash.Label)
                         Spacer(Modifier.width(10.dp))
                         Text(r, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }

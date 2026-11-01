@@ -43,9 +43,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -121,11 +118,11 @@ fun PhoneScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .blockTouches()
-            .padding(12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Telefono", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+            Text("Telefono", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
             if (tab == PhoneTab.FAVORITES && contactsPermission) {
                 IconButton(onClick = { editing = !editing }, modifier = Modifier.size(56.dp)) {
                     Icon(
@@ -140,23 +137,25 @@ fun PhoneScreen(
             }
         }
 
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            SegmentedButton(
-                selected = tab == PhoneTab.FAVORITES,
-                onClick = { tab = PhoneTab.FAVORITES },
-                shape = SegmentedButtonDefaults.itemShape(0, 2),
-                icon = { Icon(Icons.Filled.Star, null) },
-            ) { Text("Preferiti") }
-            SegmentedButton(
-                selected = tab == PhoneTab.KEYPAD,
-                onClick = { tab = PhoneTab.KEYPAD; editing = false },
-                shape = SegmentedButtonDefaults.itemShape(1, 2),
-                icon = { Icon(Icons.Filled.Dialpad, null) },
-            ) { Text("Tastierino") }
-        }
+        PillTabs(
+            options = listOf(
+                Triple(Icons.Filled.Star, "Preferiti", tab == PhoneTab.FAVORITES),
+                Triple(Icons.Filled.Dialpad, "Tastierino", tab == PhoneTab.KEYPAD),
+            ),
+            onSelect = { i ->
+                tab = if (i == 0) PhoneTab.FAVORITES else PhoneTab.KEYPAD
+                if (i == 1) editing = false
+            },
+        )
 
         if (!callPermission || !contactsPermission) {
-            CarCard(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.secondaryContainer, padding = 12) {
+            CarCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, padding = 12) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Lamp()
+                    Spacer(Modifier.width(10.dp))
+                    Text("Permessi mancanti", style = MaterialTheme.typography.titleSmall)
+                }
+                Spacer(Modifier.height(4.dp))
                 Text(
                     when {
                         !contactsPermission -> "Consenti l'accesso ai contatti per scegliere i preferiti e vederne le foto."
@@ -237,8 +236,8 @@ private fun FavoritesGrid(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1f),
-                        shape = RoundedCornerShape(36.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.large,
+                        color = Dash.Panel,
                     ) {
                         ContactPhoto(fav.photoUri, fav.name, size = null)
                     }
@@ -276,8 +275,9 @@ private fun FavoritesGrid(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1f),
-                        shape = RoundedCornerShape(36.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialTheme.shapes.large,
+                        color = Dash.BacklightDim,
+                        contentColor = Dash.OnBacklightDim,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(Icons.Filled.Add, "Aggiungi", modifier = Modifier.size(44.dp))
@@ -303,14 +303,13 @@ private fun ContactPhoto(photoUri: String?, name: String, size: Dp?) {
         Image(bmp.asImageBitmap(), contentDescription = name, contentScale = ContentScale.Crop, modifier = m)
     } else {
         Box(
-            m.background(MaterialTheme.colorScheme.secondaryContainer),
+            m.background(if (size != null) Dash.Track else Dash.Panel),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 initialsOf(name),
-                fontSize = if (size != null) 18.sp else 34.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = if (size != null) MaterialTheme.typography.titleSmall else MaterialTheme.typography.headlineMedium,
+                color = Dash.Label,
             )
         }
     }
@@ -336,7 +335,7 @@ private fun ContactPicker(
             .fillMaxSize()
             .background(scheme.surface)
             .blockTouches()
-            .padding(12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -380,7 +379,7 @@ private fun ContactPicker(
                     onClick = { onToggle(c.toFavorite()) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = segmentedShape(index, filtered.size),
-                    color = if (selected) scheme.primaryContainer else scheme.surfaceContainerHigh,
+                    color = if (selected) Dash.BacklightDim else Dash.Panel,
                 ) {
                     Row(
                         Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -428,8 +427,7 @@ private fun Keypad(onCall: (String) -> Unit, modifier: Modifier = Modifier) {
         ) {
             Text(
                 number,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -455,13 +453,13 @@ private fun Keypad(onCall: (String) -> Unit, modifier: Modifier = Modifier) {
                             .weight(1f)
                             .fillMaxSize(),
                         shape = RoundedCornerShape(28.dp),
-                        color = scheme.surfaceContainerHigh,
+                        color = Dash.Panel,
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                         ) {
-                            Text(digit, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
+                            Text(digit, style = MaterialTheme.typography.headlineSmall)
                             if (letters.isNotEmpty()) {
                                 Text(letters, style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
                             }
@@ -476,11 +474,47 @@ private fun Keypad(onCall: (String) -> Unit, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(72.dp),
             shape = RoundedCornerShape(36.dp),
-            color = if (number.isNotBlank()) Color(0xFF1E8E3E) else scheme.surfaceContainerHighest,
+            color = if (number.isNotBlank()) Dash.CallGreen else Dash.Track,
             contentColor = if (number.isNotBlank()) Color.White else scheme.onSurfaceVariant,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(Icons.Filled.Call, "Chiama", modifier = Modifier.size(36.dp))
+            }
+        }
+    }
+}
+
+/** Selettore a pillola tonale (senza bordi): la scheda attiva è un gradino più chiara. */
+@Composable
+fun PillTabs(
+    options: List<Triple<androidx.compose.ui.graphics.vector.ImageVector, String, Boolean>>,
+    onSelect: (Int) -> Unit,
+) {
+    // Pillola 28 con padding 4 → segmenti con raggio 24 (concentrici).
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = Dash.Panel,
+    ) {
+        Row(Modifier.padding(4.dp)) {
+            options.forEachIndexed { i, (icon, label, selected) ->
+                Surface(
+                    onClick = { onSelect(i) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (selected) Dash.Track else Color.Transparent,
+                    contentColor = if (selected) Dash.Numeral else Dash.Label,
+                ) {
+                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(icon, null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(label, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
             }
         }
     }
