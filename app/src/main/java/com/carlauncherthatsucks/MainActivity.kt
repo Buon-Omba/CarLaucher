@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
     ) { vm.onLocationPermissionResult() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Rigorosamente verticale, anche se il manifest venisse ignorato.
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT

@@ -6,7 +6,6 @@ import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,10 +73,10 @@ fun CarLauncherApp(
 
     val dockApps = settings.dockApps.mapNotNull { id -> apps.firstOrNull { it.id == id } }
 
+    Surface(color = CarColors.Background, contentColor = CarColors.TextPrimary) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(CarColors.Background)
             .safeDrawingPadding()
     ) {
         Column(
@@ -199,6 +199,7 @@ fun CarLauncherApp(
                 onDismiss = { showSearch = false },
             )
         }
+    }
     }
 }
 

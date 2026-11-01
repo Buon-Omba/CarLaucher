@@ -69,6 +69,7 @@ fun AppDrawer(
                 onValueChange = { query = it },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                shape = RoundedCornerShape(28.dp),
                 placeholder = { Text("Cerca app") },
                 leadingIcon = { Icon(Icons.Filled.Search, null) },
             )
@@ -93,7 +94,7 @@ fun AppDrawer(
                 val pinned = app.id in dock
                 Column(
                     Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(24.dp))
                         .background(if (pinned) CarColors.AccentDim else CarColors.Background)
                         .combinedClickable(
                             onClick = { onLaunch(app) },

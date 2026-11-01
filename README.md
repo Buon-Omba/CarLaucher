@@ -12,6 +12,7 @@ Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. N
 | **Navigazione (CoMaps)** | Pulsanti *Cerca*, *Casa*, *Lavoro*, *CoMaps*. Durante una navigazione la scheda mostra la prossima manovra (distanza, via, icona) letta dalla notifica di CoMaps; toccandola si torna alla mappa. |
 | **Musica** | Copertina, titolo, artista, avanzamento e controlli ⏮ ⏯ ⏭ della sessione multimediale attiva (Spotify, VLC, YouTube Music, radio, …). |
 | **Notifiche** | Ultime notifiche con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
+| **Stile** | Material You (Material 3 Expressive, come Android 16/17): colori dinamici presi dallo sfondo, tema chiaro/scuro di sistema, forme molto arrotondate, liste segmentate, pulsante play che cambia forma. |
 | **Dock** | Drawer di tutte le app, telefono, fino a 4 app fissate (tieni premuta un'app nel drawer) e impostazioni. |
 
 L'orientamento è bloccato in verticale (`screenOrientation="portrait"` + richiesta a runtime).

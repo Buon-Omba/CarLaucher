@@ -1,9 +1,10 @@
 package com.carlauncherthatsucks.ui
 
 import android.text.format.DateUtils
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,10 +38,13 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Work
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,43 +80,37 @@ fun NavigationCard(
     onWork: () -> Unit,
     onMap: () -> Unit,
 ) {
+    val scheme = MaterialTheme.colorScheme
     if (navigation != null) {
-        // Navigazione attiva in CoMaps: mostriamo la prossima manovra.
+        // Navigazione attiva in CoMaps: la prossima manovra, in evidenza con il colore primario.
         CarCard(
-            Modifier
-                .fillMaxWidth()
-                .border(2.dp, CarColors.Accent, CardShape),
+            Modifier.fillMaxWidth(),
             onClick = onOpenNavigation,
-            padding = 12,
+            color = scheme.primary,
+            shape = MaterialTheme.shapes.extraLarge,
+            padding = 14,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier
-                        .size(72.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(CarColors.AccentDim),
+                        .size(76.dp)
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(scheme.onPrimary.copy(alpha = 0.16f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     val icon = navigation.turnIcon
                     if (icon != null) {
-                        Image(
-                            icon.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.size(60.dp),
-                        )
+                        Image(icon.asImageBitmap(), contentDescription = null, modifier = Modifier.size(60.dp))
                     } else {
-                        Icon(
-                            Icons.Filled.Navigation, null,
-                            tint = CarColors.TextPrimary, modifier = Modifier.size(44.dp),
-                        )
+                        Icon(Icons.Filled.Navigation, null, modifier = Modifier.size(44.dp))
                     }
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
                         navigation.title.ifBlank { "Navigazione in corso" },
-                        fontSize = 26.sp,
-                        lineHeight = 28.sp,
+                        fontSize = 28.sp,
+                        lineHeight = 30.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -120,7 +118,7 @@ fun NavigationCard(
                     if (navigation.text.isNotBlank()) {
                         Text(
                             navigation.text,
-                            fontSize = 18.sp,
+                            style = MaterialTheme.typography.titleMedium,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -128,8 +126,7 @@ fun NavigationCard(
                     if (navigation.subText.isNotBlank()) {
                         Text(
                             navigation.subText,
-                            fontSize = 14.sp,
-                            color = CarColors.TextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -138,18 +135,25 @@ fun NavigationCard(
             }
         }
     } else {
-        CarCard(Modifier.fillMaxWidth(), padding = 10) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                BigAction(Icons.Filled.Search, "Cerca", onSearch, primary = true)
-                BigAction(Icons.Filled.Home, "Casa", onHome)
-                BigAction(Icons.Filled.Work, "Lavoro", onWork)
-                BigAction(Icons.Filled.Map, "CoMaps", onMap)
-            }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            // Gruppo di pulsanti "connessi": angoli grandi all'esterno, piccoli all'interno.
+            BigAction(Icons.Filled.Search, "Cerca", onSearch, segmentedRowShape(0, 4), primary = true)
+            BigAction(Icons.Filled.Home, "Casa", onHome, segmentedRowShape(1, 4))
+            BigAction(Icons.Filled.Work, "Lavoro", onWork, segmentedRowShape(2, 4))
+            BigAction(Icons.Filled.Map, "CoMaps", onMap, segmentedRowShape(3, 4))
         }
     }
+}
+
+private fun segmentedRowShape(index: Int, count: Int): RoundedCornerShape {
+    val outer = 28.dp
+    val inner = 10.dp
+    val start = if (index == 0) outer else inner
+    val end = if (index == count - 1) outer else inner
+    return RoundedCornerShape(topStart = start, bottomStart = start, topEnd = end, bottomEnd = end)
 }
 
 @Composable
@@ -157,21 +161,27 @@ private fun RowScope.BigAction(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
+    shape: RoundedCornerShape,
     primary: Boolean = false,
 ) {
-    Column(
-        Modifier
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
             .weight(1f)
-            .height(76.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (primary) CarColors.AccentDim else CarColors.CardHigh)
-            .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .height(84.dp),
+        shape = shape,
+        color = if (primary) scheme.primaryContainer else scheme.surfaceContainerHigh,
+        contentColor = if (primary) scheme.onPrimaryContainer else scheme.onSurface,
     ) {
-        Icon(icon, contentDescription = label, modifier = Modifier.size(32.dp), tint = CarColors.TextPrimary)
-        Spacer(Modifier.height(4.dp))
-        Text(label, fontSize = 14.sp, maxLines = 1)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(icon, contentDescription = label, modifier = Modifier.size(32.dp))
+            Spacer(Modifier.height(4.dp))
+            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
     }
 }
 
@@ -186,13 +196,14 @@ fun MediaCard(
     onPrevious: () -> Unit,
     onOpen: () -> Unit,
 ) {
-    CarCard(Modifier.fillMaxWidth(), padding = 12) {
+    val scheme = MaterialTheme.colorScheme
+    CarCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, padding = 14) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier
-                    .size(76.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(CarColors.CardHigh)
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(scheme.secondaryContainer)
                     .clickable(onClick = onOpen),
                 contentAlignment = Alignment.Center,
             ) {
@@ -207,11 +218,11 @@ fun MediaCard(
                 } else {
                     Icon(
                         Icons.Filled.MusicNote, null,
-                        tint = CarColors.TextSecondary, modifier = Modifier.size(36.dp),
+                        tint = scheme.onSecondaryContainer, modifier = Modifier.size(36.dp),
                     )
                 }
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
             Column(
                 Modifier
                     .weight(1f)
@@ -221,40 +232,39 @@ fun MediaCard(
                     media != null -> {
                         Text(
                             media.title.ifBlank { media.appLabel },
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             listOf(media.artist, media.album).filter { it.isNotBlank() }
                                 .joinToString(" · ").ifBlank { " " },
-                            fontSize = 15.sp,
-                            color = CarColors.TextSecondary,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = scheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             media.appLabel,
-                            fontSize = 12.sp,
-                            color = CarColors.Accent,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = scheme.primary,
                             maxLines = 1,
                         )
                     }
                     !hasAccess -> {
-                        Text("Musica", fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Musica", style = MaterialTheme.typography.titleLarge)
                         Text(
                             "Concedi l'accesso alle notifiche per controllare la riproduzione",
-                            fontSize = 13.sp,
-                            color = CarColors.TextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = scheme.onSurfaceVariant,
                         )
                     }
                     else -> {
-                        Text("Nessuna riproduzione", fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Nessuna riproduzione", style = MaterialTheme.typography.titleLarge)
                         Text(
                             "Tocca per aprire il lettore musicale",
-                            fontSize = 13.sp,
-                            color = CarColors.TextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = scheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -268,23 +278,22 @@ fun MediaCard(
                     delay(1_000)
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
                 progress = { (position.toFloat() / media.durationMs).coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = CarColors.Accent,
-                trackColor = CarColors.CardHigh,
+                    .height(6.dp),
+                color = scheme.primary,
+                trackColor = scheme.secondaryContainer,
             )
-            Row(Modifier.fillMaxWidth()) {
-                Text(formatDuration(position), fontSize = 11.sp, color = CarColors.TextSecondary)
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
+                Text(formatDuration(position), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
                 Spacer(Modifier.weight(1f))
-                Text(formatDuration(media.durationMs), fontSize = 11.sp, color = CarColors.TextSecondary)
+                Text(formatDuration(media.durationMs), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
             }
         } else {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
         }
 
         Row(
@@ -292,34 +301,45 @@ fun MediaCard(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
+            FilledTonalIconButton(
                 onClick = onPrevious,
                 enabled = media?.canSkipPrevious == true,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(width = 76.dp, height = 60.dp),
+                shape = RoundedCornerShape(20.dp),
             ) {
-                Icon(Icons.Filled.SkipPrevious, "Precedente", modifier = Modifier.size(40.dp))
+                Icon(Icons.Filled.SkipPrevious, "Precedente", modifier = Modifier.size(34.dp))
             }
-            Box(
-                Modifier
-                    .size(68.dp)
-                    .clip(CircleShape)
-                    .background(CarColors.Accent)
-                    .clickable { if (media != null) onPlayPause() else onOpen() },
-                contentAlignment = Alignment.Center,
+
+            // Stile "expressive": il pulsante cambia forma (cerchio ↔ quadrato arrotondato).
+            val playing = media?.isPlaying == true
+            val corner by animateDpAsState(
+                targetValue = if (playing) 22.dp else 40.dp,
+                animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
+                label = "playShape",
+            )
+            Surface(
+                onClick = { if (media != null) onPlayPause() else onOpen() },
+                modifier = Modifier.size(width = 104.dp, height = 72.dp),
+                shape = RoundedCornerShape(corner),
+                color = scheme.primary,
+                contentColor = scheme.onPrimary,
             ) {
-                Icon(
-                    if (media?.isPlaying == true) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = "Play/Pausa",
-                    tint = CarColors.Background,
-                    modifier = Modifier.size(44.dp),
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = "Play/Pausa",
+                        modifier = Modifier.size(42.dp),
+                    )
+                }
             }
-            IconButton(
+
+            FilledTonalIconButton(
                 onClick = onNext,
                 enabled = media?.canSkipNext == true,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(width = 76.dp, height = 60.dp),
+                shape = RoundedCornerShape(20.dp),
             ) {
-                Icon(Icons.Filled.SkipNext, "Successiva", modifier = Modifier.size(40.dp))
+                Icon(Icons.Filled.SkipNext, "Successiva", modifier = Modifier.size(34.dp))
             }
         }
     }
@@ -346,20 +366,36 @@ fun NotificationsCard(
     onDismissAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    CarCard(modifier.fillMaxWidth(), padding = 12) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Notifications, null, tint = CarColors.Accent, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(6.dp))
-            Text("Notifiche", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+    val scheme = MaterialTheme.colorScheme
+    CarCard(modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, padding = 12) {
+        Row(
+            Modifier.padding(start = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.Notifications, null, tint = scheme.primary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Notifiche", style = MaterialTheme.typography.titleMedium)
             if (notifications.isNotEmpty()) {
-                Spacer(Modifier.width(6.dp))
-                Text("${notifications.size}", fontSize = 14.sp, color = CarColors.TextSecondary)
+                Spacer(Modifier.width(8.dp))
+                Box(
+                    Modifier
+                        .clip(CircleShape)
+                        .background(scheme.primary)
+                        .padding(horizontal = 8.dp, vertical = 1.dp)
+                ) {
+                    Text(
+                        "${notifications.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = scheme.onPrimary,
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             if (notifications.any { it.clearable }) {
                 TextButton(onClick = onDismissAll) { Text("Cancella tutte") }
             }
         }
+        Spacer(Modifier.height(4.dp))
 
         when {
             !hasAccess -> Column(
@@ -371,11 +407,11 @@ fun NotificationsCard(
             ) {
                 Text(
                     "Per mostrare le notifiche serve l'accesso alle notifiche.",
-                    color = CarColors.TextSecondary,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = onGrantAccess) { Text("Concedi accesso") }
+                FilledTonalButton(onClick = onGrantAccess) { Text("Concedi accesso") }
             }
             notifications.isEmpty() -> Box(
                 Modifier
@@ -383,16 +419,27 @@ fun NotificationsCard(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Nessuna notifica", color = CarColors.TextSecondary, fontSize = 15.sp)
+                Text(
+                    "Nessuna notifica",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = scheme.onSurfaceVariant,
+                )
             }
             else -> LazyColumn(
                 Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                    .weight(1f)
+                    .clip(RoundedCornerShape(24.dp)),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                items(notifications, key = { it.key }) { n ->
-                    NotificationRow(n, onOpen = { onOpen(n) }, onDismiss = { onDismiss(n) })
+                itemsIndexed(notifications, key = { _, n -> n.key }) { index, n ->
+                    NotificationRow(
+                        n,
+                        index = index,
+                        count = notifications.size,
+                        onOpen = { onOpen(n) },
+                        onDismiss = { onDismiss(n) },
+                    )
                 }
             }
         }
@@ -400,72 +447,81 @@ fun NotificationsCard(
 }
 
 @Composable
-private fun NotificationRow(n: CarNotification, onOpen: () -> Unit, onDismiss: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(CarColors.CardHigh)
-            .clickable(onClick = onOpen)
-            .padding(start = 10.dp, top = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+private fun NotificationRow(
+    n: CarNotification,
+    index: Int,
+    count: Int,
+    onOpen: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
+        shape = segmentedShape(index, count),
+        color = scheme.surfaceContainerHighest,
+        contentColor = scheme.onSurface,
     ) {
-        val icon = n.largeIcon ?: n.appIcon
-        if (icon != null) {
-            Image(
-                icon.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop,
-            )
-        } else {
-            Icon(Icons.Filled.Notifications, null, modifier = Modifier.size(40.dp))
-        }
-        Spacer(Modifier.width(10.dp))
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    n.appLabel,
-                    fontSize = 12.sp,
-                    color = CarColors.Accent,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+        Row(
+            Modifier.padding(start = 12.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val icon = n.largeIcon ?: n.appIcon
+            if (icon != null) {
+                Image(
+                    icon.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
                 )
-                Text(
-                    " · " + formatPostTime(n.postTime),
-                    fontSize = 12.sp,
-                    color = CarColors.TextSecondary,
-                    maxLines = 1,
-                )
+            } else {
+                Icon(Icons.Filled.Notifications, null, modifier = Modifier.size(42.dp))
             }
-            if (n.title.isNotBlank()) {
-                Text(
-                    n.title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        n.appLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = scheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Text(
+                        " · " + formatPostTime(n.postTime),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = scheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
+                if (n.title.isNotBlank()) {
+                    Text(
+                        n.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (n.text.isNotBlank()) {
+                    Text(
+                        n.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = scheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
-            if (n.text.isNotBlank()) {
-                Text(
-                    n.text,
-                    fontSize = 14.sp,
-                    color = CarColors.TextSecondary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            if (n.clearable) {
+                IconButton(onClick = onDismiss, modifier = Modifier.size(52.dp)) {
+                    Icon(Icons.Filled.Close, "Elimina", tint = scheme.onSurfaceVariant)
+                }
+            } else {
+                Spacer(Modifier.width(12.dp))
             }
-        }
-        if (n.clearable) {
-            IconButton(onClick = onDismiss, modifier = Modifier.size(52.dp)) {
-                Icon(Icons.Filled.Close, "Elimina", tint = CarColors.TextSecondary)
-            }
-        } else {
-            Spacer(Modifier.width(10.dp))
         }
     }
 }
@@ -490,29 +546,44 @@ fun Dock(
     onSettings: () -> Unit,
     onLaunch: (AppInfo) -> Unit,
 ) {
-    Row(
-        Modifier
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        modifier = Modifier
             .fillMaxWidth()
-            .height(68.dp)
-            .clip(CardShape)
-            .background(CarColors.Card)
-            .padding(horizontal = 6.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
+            .height(72.dp),
+        shape = RoundedCornerShape(36.dp),
+        color = scheme.surfaceContainerHigh,
+        contentColor = scheme.onSurface,
     ) {
-        DockButton(onApps) { Icon(Icons.Filled.Apps, "App", modifier = Modifier.size(34.dp)) }
-        DockButton(onPhone) { Icon(Icons.Filled.Phone, "Telefono", modifier = Modifier.size(32.dp)) }
-        dockApps.forEach { app ->
-            DockButton({ onLaunch(app) }) {
-                val icon = app.icon
-                if (icon != null) {
-                    Image(icon.asImageBitmap(), app.label, modifier = Modifier.size(44.dp))
-                } else {
-                    Text(app.label.take(2), fontSize = 18.sp)
+        Row(
+            Modifier.padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                onClick = onApps,
+                modifier = Modifier.size(width = 72.dp, height = 56.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = scheme.primaryContainer,
+                contentColor = scheme.onPrimaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.Apps, "App", modifier = Modifier.size(30.dp))
                 }
             }
+            DockButton(onPhone) { Icon(Icons.Filled.Phone, "Telefono", modifier = Modifier.size(30.dp)) }
+            dockApps.forEach { app ->
+                DockButton({ onLaunch(app) }) {
+                    val icon = app.icon
+                    if (icon != null) {
+                        Image(icon.asImageBitmap(), app.label, modifier = Modifier.size(44.dp))
+                    } else {
+                        Text(app.label.take(2), style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+            DockButton(onSettings) { Icon(Icons.Filled.Settings, "Impostazioni", modifier = Modifier.size(30.dp)) }
         }
-        DockButton(onSettings) { Icon(Icons.Filled.Settings, "Impostazioni", modifier = Modifier.size(32.dp)) }
     }
 }
 
@@ -520,7 +591,7 @@ fun Dock(
 private fun DockButton(onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
         Modifier
-            .size(58.dp)
+            .size(56.dp)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,

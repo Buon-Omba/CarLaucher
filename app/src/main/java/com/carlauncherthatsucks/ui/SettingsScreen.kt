@@ -97,6 +97,7 @@ fun SettingsScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            shape = RoundedCornerShape(20.dp),
             label = { Text("Casa") },
             leadingIcon = { Icon(Icons.Filled.Home, null) },
         )
@@ -108,6 +109,7 @@ fun SettingsScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            shape = RoundedCornerShape(20.dp),
             label = { Text("Lavoro") },
             leadingIcon = { Icon(Icons.Filled.Work, null) },
         )
@@ -121,7 +123,7 @@ fun SettingsScreen(
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(24.dp))
                 .background(CarColors.Card)
                 .clickable { prefs.update { it.copy(keepScreenOn = !it.keepScreenOn) } }
                 .padding(14.dp),
@@ -172,7 +174,7 @@ private fun StatusRow(label: String, ok: Boolean, onClick: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(CarColors.Card)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -195,7 +197,7 @@ private fun LinkRow(label: String, onClick: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(CarColors.Card)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -222,7 +224,6 @@ fun DestinationDialog(
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = CarColors.Card,
         title = { Text("Dove andiamo?") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -233,6 +234,7 @@ fun DestinationDialog(
                         .fillMaxWidth()
                         .focusRequester(focus),
                     singleLine = true,
+                    shape = RoundedCornerShape(28.dp),
                     placeholder = { Text("Indirizzo, luogo, categoria…") },
                     leadingIcon = { Icon(Icons.Filled.Search, null) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
