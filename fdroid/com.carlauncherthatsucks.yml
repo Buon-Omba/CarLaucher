@@ -1,0 +1,27 @@
+# Metadati per https://gitlab.com/fdroid/fdroiddata (metadata/com.carlauncherthatsucks.yml).
+# Descrizioni, icona e screenshot vengono letti da fastlane/metadata/android/ in questo repository.
+Categories:
+  - Navigation
+  - Theming
+License: Unlicense
+AuthorName: Buon-Omba
+SourceCode: https://github.com/Buon-Omba/CarLaucherThatSucks
+IssueTracker: https://github.com/Buon-Omba/CarLaucherThatSucks/issues
+
+AutoName: Car Launcher
+
+RepoType: git
+Repo: https://github.com/Buon-Omba/CarLaucherThatSucks.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

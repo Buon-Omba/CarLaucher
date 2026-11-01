@@ -1,0 +1,18 @@
+<p>Un launcher Android pensato per il telefono sul cruscotto, quando l'auto non ha Android Auto e non vuoi pagare nulla. Solo in verticale, pulsanti grandi, si legge con un'occhiata.</p>
+
+<p><b>Cosa fa</b></p>
+<ul>
+<li><b>Velocità</b> in grande su un quadrante, dal GPS del telefono (senza Google Play Services).</li>
+<li><b>Meteo</b> attuale (icona e temperatura) da Open-Meteo, senza account né chiave; città di riserva se manca la posizione.</li>
+<li><b>Navigazione con CoMaps</b>: ricerca della destinazione e, durante la navigazione, la prossima manovra in home. In modalità guida CoMaps resta a schermo intero con sopra un pannello trascinabile con velocità e controlli musicali.</li>
+<li><b>Musica</b>: copertina, titolo e comandi della riproduzione attiva (qualsiasi app).</li>
+<li><b>Notifiche</b>: le ultime ricevute, senza quelle silenziose.</li>
+<li><b>Telefono</b> integrato: griglia di contatti preferiti con foto e tastierino.</li>
+<li><b>Assistente vocale</b>: apre Claude o Gemini, oppure una chat vocale dentro il launcher con qualsiasi API compatibile OpenAI (anche un server Ollama nella tua rete).</li>
+</ul>
+
+<p><b>Stile</b>: "quadro strumenti di notte" su base Material You, con i colori presi dallo sfondo e tema chiaro/scuro di sistema.</p>
+
+<p><b>Permessi</b>: posizione (velocità e meteo), accesso alle notifiche (notifiche, musica, manovre di CoMaps), contatti e chiamate (preferiti), mostra sopra altre app (pannello guida), microfono (solo per la chat vocale via API).</p>
+
+<p>Note: Open-Meteo è usato per il meteo. L'assistente vocale via API invia la tua domanda solo al servizio che configuri tu.</p>

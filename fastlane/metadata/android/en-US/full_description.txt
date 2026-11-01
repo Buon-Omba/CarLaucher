@@ -1,0 +1,18 @@
+<p>An Android launcher for a phone mounted on the dashboard, for cars without Android Auto. Portrait only, big buttons, readable at a glance.</p>
+
+<p><b>Features</b></p>
+<ul>
+<li><b>Speed</b> shown large on a dial, from the phone's GPS (no Google Play Services).</li>
+<li><b>Current weather</b> (icon and temperature) from Open-Meteo, no account or key; fallback city when no location is available.</li>
+<li><b>Navigation with CoMaps</b>: destination search and, while navigating, the next maneuver on the home screen. In drive mode CoMaps stays full screen with a draggable panel on top showing speed and media controls.</li>
+<li><b>Music</b>: artwork, title and controls for whatever is playing (any app).</li>
+<li><b>Notifications</b>: the latest ones, silent notifications excluded.</li>
+<li><b>Built-in phone</b>: grid of favorite contacts with photos, plus a keypad.</li>
+<li><b>Voice assistant</b>: opens Claude or Gemini, or runs a voice chat inside the launcher with any OpenAI-compatible API (including an Ollama server on your network).</li>
+</ul>
+
+<p><b>Look</b>: a "night-time instrument cluster" on top of Material You, with wallpaper colors and system light/dark theme. The interface is in Italian.</p>
+
+<p><b>Permissions</b>: location (speed and weather), notification access (notifications, music, CoMaps maneuvers), contacts and calls (favorites), display over other apps (drive panel), microphone (only for the API voice chat).</p>
+
+<p>Notes: Open-Meteo is used for weather. The API voice assistant only sends your question to the service you configure.</p>

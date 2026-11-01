@@ -1,0 +1,6 @@
+First release.
+• Speed, weather, music, notifications (silent ones excluded)
+• CoMaps: search, maneuver on home screen, drive mode with panel over the map
+• Phone with favorites and keypad
+• Voice assistant: Claude, Gemini or any OpenAI-compatible API
+• Material You "night-time instrument cluster" look

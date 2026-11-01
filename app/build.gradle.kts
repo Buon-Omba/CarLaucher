@@ -21,9 +21,16 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Firmato con la chiave di debug così l'APK di release è installabile senza keystore.
-            signingConfig = signingConfigs.getByName("debug")
+            // Nessuna firma qui: su F-Droid l'APK di release lo firma F-Droid.
+            // Niente metadati di controllo versione nell'APK (build riproducibili).
+            vcsInfo.include = false
         }
+    }
+
+    // Richiesto da F-Droid: niente blocco "dependency info" cifrato nell'APK/AAB.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     compileOptions {

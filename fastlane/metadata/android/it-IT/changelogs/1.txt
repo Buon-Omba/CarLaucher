@@ -1,0 +1,6 @@
+Prima versione.
+• Velocità, meteo, musica, notifiche (senza quelle silenziose)
+• CoMaps: ricerca, manovra in home, modalità guida con pannello sopra la mappa
+• Telefono con preferiti e tastierino
+• Assistente vocale: Claude, Gemini o API compatibile OpenAI
+• Stile Material You "quadro strumenti di notte"
