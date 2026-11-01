@@ -8,12 +8,14 @@ Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. N
 | Sezione | Cosa fa |
 |---|---|
 | **Velocità** | km/h letti dal GPS del telefono (con stima da distanza/tempo se il chip non fornisce la velocità). |
-| **Meteo** | Icona + temperatura attuale da [Open-Meteo](https://open-meteo.com) per la posizione corrente; si aggiorna ogni 15 min o dopo 10 km. Tocca la scheda per aggiornare subito. |
-| **Navigazione (CoMaps)** | Pulsanti *Cerca*, *Casa*, *Lavoro*, *CoMaps*. Durante una navigazione la scheda mostra la prossima manovra (distanza, via, icona) letta dalla notifica di CoMaps; toccandola si torna alla mappa. |
+| **Meteo** | Icona + temperatura da [Open-Meteo](https://open-meteo.com) (gratuito, senza chiave). Usa GPS, rete, "fused" e posizione passiva; se non c'è nessuna posizione usa la **città di riserva** impostata nelle impostazioni. Tocca per aggiornare. |
+| **Navigazione (CoMaps)** | Pulsante nel footer: se CoMaps sta navigando apre una pagina a tutto schermo con la manovra (letta dalla notifica di CoMaps) e la velocità; altrimenti apre la ricerca della destinazione in CoMaps. Durante la navigazione la manovra compare anche in home. |
+| **Telefono** | Integrato nel launcher: griglia di contatti preferiti con foto (scelti dalla rubrica) e tastierino. Un tocco = chiamata. |
+| **Claude** | Pulsante nel footer per la chat vocale: avvia la scorciatoia vocale dell'app Claude se disponibile, altrimenti apre l'app. |
 | **Musica** | Copertina, titolo, artista, avanzamento e controlli ⏮ ⏯ ⏭ della sessione multimediale attiva (Spotify, VLC, YouTube Music, radio, …). |
 | **Notifiche** | Ultime notifiche con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
 | **Stile** | Material You (Material 3 Expressive, come Android 16/17): colori dinamici presi dallo sfondo, tema chiaro/scuro di sistema, forme molto arrotondate, liste segmentate, pulsante play che cambia forma. |
-| **Dock** | Drawer di tutte le app, telefono, fino a 4 app fissate (tieni premuta un'app nel drawer) e impostazioni. |
+| **Footer** | App · Navigazione · Telefono · fino a 3 app fissate (tieni premuta un'app nel drawer) · Claude. Le impostazioni sono nel drawer delle app (⚙). |
 
 L'orientamento è bloccato in verticale (`screenOrientation="portrait"` + richiesta a runtime).
 
@@ -23,7 +25,7 @@ L'orientamento è bloccato in verticale (`screenOrientation="portrait"` + richie
 2. Concedi l'**Accesso alle notifiche** (serve per notifiche, controlli musica e manovre di CoMaps).
    Su Android 13+ con APK installato a mano: *Impostazioni → App → Car Launcher → ⋮ → Consenti impostazioni con restrizioni*, poi riprova.
 3. *Impostazioni → Imposta come launcher predefinito* e scegli **Car Launcher**.
-4. In impostazioni inserisci gli indirizzi di **Casa** e **Lavoro** (testo libero o coordinate `45.4642, 9.1900`).
+4. Opzionale: in impostazioni (drawer app → ⚙) imposta la **città di riserva** per il meteo.
 
 CoMaps va installato a parte (es. da [F-Droid](https://f-droid.org/packages/app.comaps.fdroid/)). Le destinazioni vengono passate a CoMaps tramite URI `geo:`.
 

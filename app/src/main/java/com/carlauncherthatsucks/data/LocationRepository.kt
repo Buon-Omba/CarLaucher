@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.os.SystemClock
@@ -84,14 +85,22 @@ class LocationRepository(private val context: Context) {
             }
         } catch (_: Exception) {
         }
-        try {
-            if (lm.allProviders.contains(LocationManager.NETWORK_PROVIDER)) {
-                lm.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 60_000L, 100f, networkListener,
-                    Looper.getMainLooper()
-                )
+        // Posizione approssimativa per il meteo: rete, "fused" (Android 12+) e passiva
+        // (riceve anche i fix chiesti da altre app, es. CoMaps durante la navigazione).
+        val coarseProviders = buildList {
+            add(LocationManager.NETWORK_PROVIDER)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
+            add(LocationManager.PASSIVE_PROVIDER)
+        }
+        for (provider in coarseProviders) {
+            try {
+                if (lm.allProviders.contains(provider)) {
+                    lm.requestLocationUpdates(
+                        provider, 60_000L, 100f, networkListener, Looper.getMainLooper()
+                    )
+                }
+            } catch (_: Exception) {
             }
-        } catch (_: Exception) {
         }
     }
 

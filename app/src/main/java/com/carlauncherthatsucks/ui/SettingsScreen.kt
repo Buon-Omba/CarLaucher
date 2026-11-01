@@ -22,10 +22,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +38,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,14 +60,27 @@ fun SettingsScreen(
     prefs: Prefs,
     notificationAccess: Boolean,
     locationPermission: Boolean,
+    contactsPermission: Boolean,
+    callPermission: Boolean,
     onRequestLocation: () -> Unit,
+    onRequestPhone: () -> Unit,
+    onSetWeatherCity: suspend (String) -> Boolean,
     onNotificationAccess: () -> Unit,
     onDefaultLauncher: () -> Unit,
     onAppInfo: () -> Unit,
     onClose: () -> Unit,
 ) {
-    var home by remember { mutableStateOf(settings.homeAddress) }
-    var work by remember { mutableStateOf(settings.workAddress) }
+    var city by remember { mutableStateOf(settings.weatherPlace?.label?.substringBefore(",").orEmpty()) }
+    var cityError by remember { mutableStateOf(false) }
+    var searchingCity by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val saveCity = {
+        searchingCity = true
+        scope.launch {
+            cityError = !onSetWeatherCity(city)
+            searchingCity = false
+        }
+    }
 
     Column(
         Modifier
@@ -83,37 +98,44 @@ fun SettingsScreen(
             }
         }
 
-        SectionTitle("Destinazioni preferite (CoMaps)")
+        SectionTitle("Meteo")
         Text(
-            "Scrivi un indirizzo (es. \"Via Roma 1, Milano\") oppure delle coordinate (es. \"45.4642, 9.1900\").",
+            "Il meteo usa la tua posizione. Se il telefono non ne trova una (GPS al chiuso, nessun " +
+                "servizio di localizzazione di rete), usa questa città.",
             fontSize = 13.sp,
             color = CarColors.TextSecondary,
         )
         OutlinedTextField(
-            value = home,
+            value = city,
             onValueChange = {
-                home = it
-                prefs.update { s -> s.copy(homeAddress = it) }
+                city = it
+                cityError = false
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(20.dp),
-            label = { Text("Casa") },
-            leadingIcon = { Icon(Icons.Filled.Home, null) },
-        )
-        OutlinedTextField(
-            value = work,
-            onValueChange = {
-                work = it
-                prefs.update { s -> s.copy(workAddress = it) }
+            label = { Text("Città di riserva") },
+            leadingIcon = { Icon(Icons.Filled.LocationCity, null) },
+            isError = cityError,
+            supportingText = {
+                Text(
+                    when {
+                        searchingCity -> "Ricerca…"
+                        cityError -> "Città non trovata o nessuna connessione"
+                        settings.weatherPlace != null -> settings.weatherPlace.label
+                        else -> "Nessuna città impostata"
+                    }
+                )
             },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(20.dp),
-            label = { Text("Lavoro") },
-            leadingIcon = { Icon(Icons.Filled.Work, null) },
+            trailingIcon = {
+                IconButton(onClick = { saveCity() }) { Icon(Icons.Filled.Check, "Salva") }
+            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { saveCity() }),
         )
+
         if (settings.recentDestinations.isNotEmpty()) {
+            SectionTitle("Navigazione")
             TextButton(onClick = { prefs.update { it.copy(recentDestinations = emptyList()) } }) {
                 Text("Cancella cronologia ricerche")
             }
@@ -146,6 +168,7 @@ fun SettingsScreen(
         SectionTitle("Permessi e sistema")
         StatusRow("Posizione (velocità e meteo)", locationPermission, onRequestLocation)
         StatusRow("Accesso alle notifiche (notifiche, musica, navigazione)", notificationAccess, onNotificationAccess)
+        StatusRow("Contatti e chiamate (telefono)", contactsPermission && callPermission, onRequestPhone)
         LinkRow("Imposta come launcher predefinito", onDefaultLauncher)
         LinkRow("Informazioni app / permessi", onAppInfo)
         Text(

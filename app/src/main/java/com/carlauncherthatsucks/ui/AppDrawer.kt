@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -50,6 +51,7 @@ fun AppDrawer(
     dock: List<String>,
     onLaunch: (AppInfo) -> Unit,
     onToggleDock: (AppInfo) -> Unit,
+    onSettings: () -> Unit,
     onClose: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
@@ -73,6 +75,9 @@ fun AppDrawer(
                 placeholder = { Text("Cerca app") },
                 leadingIcon = { Icon(Icons.Filled.Search, null) },
             )
+            IconButton(onClick = onSettings, modifier = Modifier.size(56.dp)) {
+                Icon(Icons.Filled.Settings, "Impostazioni", modifier = Modifier.size(28.dp))
+            }
             IconButton(onClick = onClose, modifier = Modifier.size(60.dp)) {
                 Icon(Icons.Filled.Close, "Chiudi", modifier = Modifier.size(32.dp))
             }

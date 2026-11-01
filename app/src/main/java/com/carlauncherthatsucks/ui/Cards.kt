@@ -25,8 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Notifications
@@ -34,10 +32,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -54,6 +50,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -74,116 +72,62 @@ import java.util.Locale
 
 // ---------------------------------------------------------------- Navigazione
 
+/** Prossima manovra di CoMaps, mostrata in home solo durante una navigazione. */
 @Composable
 fun NavigationCard(
-    navigation: NavigationInfo?,
-    onOpenNavigation: () -> Unit,
-    onSearch: () -> Unit,
-    onHome: () -> Unit,
-    onWork: () -> Unit,
-    onMap: () -> Unit,
+    navigation: NavigationInfo,
+    onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    if (navigation != null) {
-        // Navigazione attiva in CoMaps: la prossima manovra, in evidenza con il colore primario.
-        CarCard(
-            Modifier.fillMaxWidth(),
-            onClick = onOpenNavigation,
-            color = scheme.primary,
-            shape = MaterialTheme.shapes.extraLarge,
-            padding = 14,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier
-                        .size(76.dp)
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(scheme.onPrimary.copy(alpha = 0.16f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    val icon = navigation.turnIcon
-                    if (icon != null) {
-                        Image(icon.asImageBitmap(), contentDescription = null, modifier = Modifier.size(60.dp))
-                    } else {
-                        Icon(Icons.Filled.Navigation, null, modifier = Modifier.size(44.dp))
-                    }
+    CarCard(
+        Modifier.fillMaxWidth(),
+        onClick = onClick,
+        color = scheme.primary,
+        shape = MaterialTheme.shapes.extraLarge,
+        padding = 14,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(scheme.onPrimary.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                val icon = navigation.turnIcon
+                if (icon != null) {
+                    Image(icon.asImageBitmap(), contentDescription = null, modifier = Modifier.size(60.dp))
+                } else {
+                    Icon(Icons.Filled.Navigation, null, modifier = Modifier.size(44.dp))
                 }
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    navigation.title.ifBlank { "Navigazione in corso" },
+                    fontSize = 28.sp,
+                    lineHeight = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (navigation.text.isNotBlank()) {
                     Text(
-                        navigation.title.ifBlank { "Navigazione in corso" },
-                        fontSize = 28.sp,
-                        lineHeight = 30.sp,
-                        fontWeight = FontWeight.Bold,
+                        navigation.text,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (navigation.subText.isNotBlank()) {
+                    Text(
+                        navigation.subText,
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (navigation.text.isNotBlank()) {
-                        Text(
-                            navigation.text,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (navigation.subText.isNotBlank()) {
-                        Text(
-                            navigation.subText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
                 }
             }
-        }
-    } else {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            // Gruppo di pulsanti "connessi": angoli grandi all'esterno, piccoli all'interno.
-            BigAction(Icons.Filled.Search, "Cerca", onSearch, segmentedRowShape(0, 4), primary = true)
-            BigAction(Icons.Filled.Home, "Casa", onHome, segmentedRowShape(1, 4))
-            BigAction(Icons.Filled.Work, "Lavoro", onWork, segmentedRowShape(2, 4))
-            BigAction(Icons.Filled.Map, "CoMaps", onMap, segmentedRowShape(3, 4))
-        }
-    }
-}
-
-private fun segmentedRowShape(index: Int, count: Int): RoundedCornerShape {
-    val outer = 28.dp
-    val inner = 10.dp
-    val start = if (index == 0) outer else inner
-    val end = if (index == count - 1) outer else inner
-    return RoundedCornerShape(topStart = start, bottomStart = start, topEnd = end, bottomEnd = end)
-}
-
-@Composable
-private fun RowScope.BigAction(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    shape: RoundedCornerShape,
-    primary: Boolean = false,
-) {
-    val scheme = MaterialTheme.colorScheme
-    Surface(
-        onClick = onClick,
-        modifier = Modifier
-            .weight(1f)
-            .height(84.dp),
-        shape = shape,
-        color = if (primary) scheme.primaryContainer else scheme.surfaceContainerHigh,
-        contentColor = if (primary) scheme.onPrimaryContainer else scheme.onSurface,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Icon(icon, contentDescription = label, modifier = Modifier.size(32.dp))
-            Spacer(Modifier.height(4.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
     }
 }
@@ -543,9 +487,11 @@ private fun formatPostTime(time: Long): String {
 @Composable
 fun Dock(
     dockApps: List<AppInfo>,
+    navigationActive: Boolean,
     onApps: () -> Unit,
+    onNavigation: () -> Unit,
     onPhone: () -> Unit,
-    onSettings: () -> Unit,
+    onClaude: () -> Unit,
     onLaunch: (AppInfo) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -558,44 +504,62 @@ fun Dock(
         contentColor = scheme.onSurface,
     ) {
         Row(
-            Modifier.padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            Modifier.padding(horizontal = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                onClick = onApps,
-                modifier = Modifier.size(width = 72.dp, height = 56.dp),
-                shape = RoundedCornerShape(28.dp),
-                color = scheme.primaryContainer,
-                contentColor = scheme.onPrimaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Apps, "App", modifier = Modifier.size(30.dp))
-                }
+            DockButton(onApps, highlighted = true) {
+                Icon(Icons.Filled.Apps, "App", modifier = Modifier.size(28.dp))
             }
-            DockButton(onPhone) { Icon(Icons.Filled.Phone, "Telefono", modifier = Modifier.size(30.dp)) }
+            DockButton(onNavigation, highlighted = navigationActive, accent = navigationActive) {
+                Icon(
+                    if (navigationActive) Icons.Filled.Navigation else Icons.Filled.Search,
+                    if (navigationActive) "Navigazione in corso" else "Cerca destinazione",
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+            DockButton(onPhone) { Icon(Icons.Filled.Phone, "Telefono", modifier = Modifier.size(28.dp)) }
             dockApps.forEach { app ->
                 DockButton({ onLaunch(app) }) {
                     val icon = app.icon
                     if (icon != null) {
-                        Image(icon.asImageBitmap(), app.label, modifier = Modifier.size(44.dp))
+                        Image(icon.asImageBitmap(), app.label, modifier = Modifier.size(40.dp))
                     } else {
                         Text(app.label.take(2), style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
-            DockButton(onSettings) { Icon(Icons.Filled.Settings, "Impostazioni", modifier = Modifier.size(30.dp)) }
+            DockButton(onClaude) {
+                Icon(Icons.Filled.GraphicEq, "Chat vocale con Claude", modifier = Modifier.size(28.dp))
+            }
         }
     }
 }
 
 @Composable
-private fun DockButton(onClick: () -> Unit, content: @Composable () -> Unit) {
-    Box(
-        Modifier
-            .size(56.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) { content() }
+private fun RowScope.DockButton(
+    onClick: () -> Unit,
+    highlighted: Boolean = false,
+    accent: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+        Surface(
+            onClick = onClick,
+            modifier = Modifier.size(width = 56.dp, height = 52.dp),
+            shape = RoundedCornerShape(26.dp),
+            color = when {
+                accent -> scheme.primary
+                highlighted -> scheme.primaryContainer
+                else -> Color.Transparent
+            },
+            contentColor = when {
+                accent -> scheme.onPrimary
+                highlighted -> scheme.onPrimaryContainer
+                else -> scheme.onSurface
+            },
+        ) {
+            Box(contentAlignment = Alignment.Center) { content() }
+        }
+    }
 }

@@ -1,11 +1,14 @@
 package com.carlauncherthatsucks.ui
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,10 +33,11 @@ import com.carlauncherthatsucks.LauncherViewModel
 import com.carlauncherthatsucks.data.AppsRepository
 import com.carlauncherthatsucks.data.CoMaps
 import com.carlauncherthatsucks.data.NotificationStore
-import com.carlauncherthatsucks.data.parseCoordinates
+import com.carlauncherthatsucks.data.Prefs
+import com.carlauncherthatsucks.data.ClaudeAssistant
 import com.carlauncherthatsucks.data.sendFromForeground
 
-private enum class Overlay { NONE, APPS, SETTINGS }
+private enum class Overlay { NONE, APPS, SETTINGS, PHONE, NAVIGATION }
 
 @Composable
 fun CarLauncherApp(
@@ -48,6 +52,10 @@ fun CarLauncherApp(
     val settings by vm.prefs.settings.collectAsStateWithLifecycle()
     val speed by vm.location.speed.collectAsStateWithLifecycle()
     val weather by vm.weather.collectAsStateWithLifecycle()
+    val weatherStatus by vm.weatherStatus.collectAsStateWithLifecycle()
+    val contacts by vm.contacts.collectAsStateWithLifecycle()
+    val contactsPermission by vm.contactsPermission.collectAsStateWithLifecycle()
+    val callPermission by vm.callPermission.collectAsStateWithLifecycle()
     val media by vm.media.state.collectAsStateWithLifecycle()
     val navigation by NotificationStore.navigation.collectAsStateWithLifecycle()
     val notifications by NotificationStore.notifications.collectAsStateWithLifecycle()
@@ -69,10 +77,20 @@ fun CarLauncherApp(
         }
     }
 
+    val phonePermissions = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { vm.loadContacts() }
+
+    val openMap = {
+        val pi = navigation?.contentIntent
+        if (pi == null || !pi.sendFromForeground(context)) CoMaps.open(context)
+    }
+
     // Il launcher non si "chiude" con Indietro: chiude solo i pannelli aperti.
     BackHandler(enabled = true) { overlay = Overlay.NONE }
 
     val dockApps = settings.dockApps.mapNotNull { id -> apps.firstOrNull { it.id == id } }
+        .take(Prefs.MAX_DOCK)
 
     Surface(color = CarColors.Background, contentColor = CarColors.TextPrimary) {
     Box(
@@ -109,24 +127,16 @@ fun CarLauncherApp(
                     ClockCard(Modifier.weight(1f))
                     WeatherIndicator(
                         weather = weather,
-                        hasLocation = locationPermission,
+                        status = weatherStatus,
                         onClick = { vm.refreshWeatherNow() },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
 
-            NavigationCard(
-                navigation = navigation,
-                onOpenNavigation = {
-                    val pi = navigation?.contentIntent
-                    if (pi == null || !pi.sendFromForeground(context)) CoMaps.open(context)
-                },
-                onSearch = { showSearch = true },
-                onHome = { navigateTo(context, settings.homeAddress, "Casa") { overlay = Overlay.SETTINGS } },
-                onWork = { navigateTo(context, settings.workAddress, "Lavoro") { overlay = Overlay.SETTINGS } },
-                onMap = { CoMaps.open(context) },
-            )
+            navigation?.let { nav ->
+                NavigationCard(navigation = nav, onClick = { overlay = Overlay.NAVIGATION })
+            }
 
             MediaCard(
                 media = media,
@@ -157,9 +167,13 @@ fun CarLauncherApp(
 
             Dock(
                 dockApps = dockApps,
+                navigationActive = navigation != null,
                 onApps = { overlay = Overlay.APPS },
-                onPhone = { openDialer(context) },
-                onSettings = { overlay = Overlay.SETTINGS },
+                onNavigation = {
+                    if (navigation != null) overlay = Overlay.NAVIGATION else showSearch = true
+                },
+                onPhone = { overlay = Overlay.PHONE },
+                onClaude = { ClaudeAssistant.startVoice(context) },
                 onLaunch = { AppsRepository.launch(context, it) },
             )
         }
@@ -173,6 +187,7 @@ fun CarLauncherApp(
                     overlay = Overlay.NONE
                 },
                 onToggleDock = { vm.prefs.toggleDock(it.id) },
+                onSettings = { overlay = Overlay.SETTINGS },
                 onClose = { overlay = Overlay.NONE },
             )
             Overlay.SETTINGS -> SettingsScreen(
@@ -180,10 +195,34 @@ fun CarLauncherApp(
                 prefs = vm.prefs,
                 notificationAccess = notificationAccess,
                 locationPermission = locationPermission,
+                contactsPermission = contactsPermission,
+                callPermission = callPermission,
                 onRequestLocation = requestLocationPermission,
+                onRequestPhone = {
+                    phonePermissions.launch(
+                        arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE)
+                    )
+                },
+                onSetWeatherCity = { vm.setWeatherCity(it) },
                 onNotificationAccess = { openNotificationAccess(context) },
                 onDefaultLauncher = { openHomeSettings(context) },
                 onAppInfo = { openAppInfo(context) },
+                onClose = { overlay = Overlay.NONE },
+            )
+            Overlay.PHONE -> PhoneScreen(
+                favorites = settings.favoriteContacts,
+                contacts = contacts,
+                contactsPermission = contactsPermission,
+                callPermission = callPermission,
+                onLoadContacts = { vm.loadContacts() },
+                onPermissionsChanged = { vm.refreshPermissions() },
+                onToggleFavorite = { vm.prefs.toggleFavorite(it) },
+                onClose = { overlay = Overlay.NONE },
+            )
+            Overlay.NAVIGATION -> NavigationScreen(
+                navigation = navigation,
+                speed = speed,
+                onOpenMap = openMap,
                 onClose = { overlay = Overlay.NONE },
             )
             Overlay.NONE -> Unit
@@ -201,21 +240,6 @@ fun CarLauncherApp(
             )
         }
     }
-    }
-}
-
-private fun navigateTo(context: Context, address: String, name: String, onMissing: () -> Unit) {
-    if (address.isBlank()) {
-        Toast.makeText(context, "Imposta l'indirizzo \"$name\" nelle impostazioni", Toast.LENGTH_LONG)
-            .show()
-        onMissing()
-        return
-    }
-    val coords = parseCoordinates(address)
-    if (coords != null) {
-        CoMaps.showPoint(context, coords.first, coords.second, name)
-    } else {
-        CoMaps.search(context, address)
     }
 }
 
@@ -238,4 +262,3 @@ private fun openAppInfo(context: Context) = safeStart(
     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + context.packageName))
 )
 
-private fun openDialer(context: Context) = safeStart(context, Intent(Intent.ACTION_DIAL))

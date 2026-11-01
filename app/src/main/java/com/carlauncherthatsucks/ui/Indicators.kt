@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.carlauncherthatsucks.data.SpeedState
 import com.carlauncherthatsucks.data.Weather
 import com.carlauncherthatsucks.data.WeatherKind
+import com.carlauncherthatsucks.data.WeatherStatus
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -198,7 +199,7 @@ fun weatherIcon(w: Weather?): Pair<ImageVector, Color> {
 @Composable
 fun WeatherIndicator(
     weather: Weather?,
-    hasLocation: Boolean,
+    status: WeatherStatus,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -226,7 +227,8 @@ fun WeatherIndicator(
                 Text(
                     when {
                         weather != null -> weather.description
-                        !hasLocation -> "No posizione"
+                        status == WeatherStatus.NO_LOCATION -> "Imposta città"
+                        status == WeatherStatus.NETWORK_ERROR -> "Offline"
                         else -> "Meteo…"
                     },
                     style = MaterialTheme.typography.labelMedium,

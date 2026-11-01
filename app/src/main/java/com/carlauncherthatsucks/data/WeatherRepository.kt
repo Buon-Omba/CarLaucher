@@ -5,7 +5,11 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.util.Locale
+
+/** Perché il meteo non è (ancora) disponibile. */
+enum class WeatherStatus { LOADING, NO_LOCATION, NETWORK_ERROR, OK }
 
 enum class WeatherKind { CLEAR, PARTLY_CLOUDY, CLOUDY, FOG, DRIZZLE, RAIN, SNOW, THUNDER, UNKNOWN }
 
@@ -81,5 +85,33 @@ object WeatherRepository {
             latitude = lat,
             longitude = lon,
         )
+    }
+
+    /** Cerca una città con il geocoding di Open-Meteo (stesso servizio, senza chiave). */
+    suspend fun geocode(name: String): WeatherPlace? = withContext(Dispatchers.IO) {
+        val url = URL(
+            "https://geocoding-api.open-meteo.com/v1/search?count=1&language=it&format=json&name=" +
+                URLEncoder.encode(name.trim(), "UTF-8")
+        )
+        val conn = url.openConnection() as HttpURLConnection
+        try {
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 10_000
+            if (conn.responseCode !in 200..299) error("HTTP ${conn.responseCode}")
+            parseGeocoding(conn.inputStream.bufferedReader().use { it.readText() })
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    fun parseGeocoding(json: String): WeatherPlace? {
+        val results = JSONObject(json).optJSONArray("results") ?: return null
+        if (results.length() == 0) return null
+        val r = results.getJSONObject(0)
+        val label = listOf(r.optString("name"), r.optString("admin1"), r.optString("country"))
+            .filter { it.isNotBlank() }
+            .distinct()
+            .joinToString(", ")
+        return WeatherPlace(label, r.getDouble("latitude"), r.getDouble("longitude"))
     }
 }

@@ -4,15 +4,34 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** Contatto preferito mostrato nella griglia del telefono. */
+data class FavoriteContact(
+    val lookupKey: String,
+    val name: String,
+    val number: String,
+    val photoUri: String?,
+) {
+    val id: String get() = "$lookupKey|$number"
+}
+
+/** Città usata per il meteo quando non c'è una posizione disponibile. */
+data class WeatherPlace(
+    val label: String,
+    val latitude: Double,
+    val longitude: Double,
+)
 
 data class Settings(
-    val homeAddress: String = "",
-    val workAddress: String = "",
     val keepScreenOn: Boolean = true,
     /** App fissate nella barra in basso (id = package/activity). */
     val dockApps: List<String> = emptyList(),
     /** Ultime destinazioni cercate, la più recente per prima. */
     val recentDestinations: List<String> = emptyList(),
+    val favoriteContacts: List<FavoriteContact> = emptyList(),
+    val weatherPlace: WeatherPlace? = null,
 )
 
 class Prefs(context: Context) {
@@ -22,21 +41,21 @@ class Prefs(context: Context) {
     val settings: StateFlow<Settings> = _settings.asStateFlow()
 
     private fun read() = Settings(
-        homeAddress = sp.getString(KEY_HOME, "").orEmpty(),
-        workAddress = sp.getString(KEY_WORK, "").orEmpty(),
         keepScreenOn = sp.getBoolean(KEY_SCREEN_ON, true),
         dockApps = sp.getString(KEY_DOCK, "").orEmpty().split(SEP).filter { it.isNotBlank() },
         recentDestinations = sp.getString(KEY_RECENTS, "").orEmpty().split(SEP)
             .filter { it.isNotBlank() },
+        favoriteContacts = decodeFavorites(sp.getString(KEY_FAVORITES, null)),
+        weatherPlace = decodeWeatherPlace(sp.getString(KEY_WEATHER_PLACE, null)),
     )
 
     private fun write(s: Settings) {
         sp.edit()
-            .putString(KEY_HOME, s.homeAddress)
-            .putString(KEY_WORK, s.workAddress)
             .putBoolean(KEY_SCREEN_ON, s.keepScreenOn)
             .putString(KEY_DOCK, s.dockApps.joinToString(SEP))
             .putString(KEY_RECENTS, s.recentDestinations.joinToString(SEP))
+            .putString(KEY_FAVORITES, encodeFavorites(s.favoriteContacts))
+            .putString(KEY_WEATHER_PLACE, s.weatherPlace?.let { encodeWeatherPlace(it) })
             .apply()
         _settings.value = s
     }
@@ -47,15 +66,18 @@ class Prefs(context: Context) {
 
     fun toggleDock(appId: String) = update { it.withDockToggled(appId) }
 
+    fun toggleFavorite(contact: FavoriteContact) = update { it.withFavoriteToggled(contact) }
+
     companion object {
-        const val MAX_DOCK = 4
+        const val MAX_DOCK = 3
         const val MAX_RECENTS = 6
+        const val MAX_FAVORITES = 12
         internal const val SEP = "\u001F"
-        private const val KEY_HOME = "home"
-        private const val KEY_WORK = "work"
         private const val KEY_SCREEN_ON = "screen_on"
         private const val KEY_DOCK = "dock"
         private const val KEY_RECENTS = "recents"
+        private const val KEY_FAVORITES = "favorite_contacts"
+        private const val KEY_WEATHER_PLACE = "weather_place"
     }
 }
 
@@ -72,4 +94,58 @@ fun Settings.withDockToggled(appId: String): Settings = when {
     appId in dockApps -> copy(dockApps = dockApps - appId)
     dockApps.size >= Prefs.MAX_DOCK -> this
     else -> copy(dockApps = dockApps + appId)
+}
+
+/** Aggiunge o toglie un contatto dai preferiti (oltre [Prefs.MAX_FAVORITES] non ne aggiunge). */
+fun Settings.withFavoriteToggled(contact: FavoriteContact): Settings = when {
+    favoriteContacts.any { it.id == contact.id } ->
+        copy(favoriteContacts = favoriteContacts.filterNot { it.id == contact.id })
+    favoriteContacts.size >= Prefs.MAX_FAVORITES -> this
+    else -> copy(favoriteContacts = favoriteContacts + contact)
+}
+
+fun encodeFavorites(list: List<FavoriteContact>): String = JSONArray().apply {
+    list.forEach { c ->
+        put(
+            JSONObject()
+                .put("lookup", c.lookupKey)
+                .put("name", c.name)
+                .put("number", c.number)
+                .put("photo", c.photoUri ?: "")
+        )
+    }
+}.toString()
+
+fun decodeFavorites(json: String?): List<FavoriteContact> {
+    if (json.isNullOrBlank()) return emptyList()
+    return try {
+        val arr = JSONArray(json)
+        (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            FavoriteContact(
+                lookupKey = o.optString("lookup"),
+                name = o.optString("name"),
+                number = o.optString("number"),
+                photoUri = o.optString("photo").ifBlank { null },
+            )
+        }.filter { it.number.isNotBlank() }
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+fun encodeWeatherPlace(p: WeatherPlace): String = JSONObject()
+    .put("label", p.label)
+    .put("lat", p.latitude)
+    .put("lon", p.longitude)
+    .toString()
+
+fun decodeWeatherPlace(json: String?): WeatherPlace? {
+    if (json.isNullOrBlank()) return null
+    return try {
+        val o = JSONObject(json)
+        WeatherPlace(o.getString("label"), o.getDouble("lat"), o.getDouble("lon"))
+    } catch (_: Exception) {
+        null
+    }
 }
