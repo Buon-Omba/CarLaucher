@@ -30,6 +30,7 @@ import com.carlauncherthatsucks.LauncherViewModel
 import com.carlauncherthatsucks.data.AppsRepository
 import com.carlauncherthatsucks.data.CoMaps
 import com.carlauncherthatsucks.data.NotificationStore
+import com.carlauncherthatsucks.data.parseCoordinates
 import com.carlauncherthatsucks.data.sendFromForeground
 
 private enum class Overlay { NONE, APPS, SETTINGS }
@@ -216,16 +217,6 @@ private fun navigateTo(context: Context, address: String, name: String, onMissin
     } else {
         CoMaps.search(context, address)
     }
-}
-
-/** Accetta indirizzi scritti come "45.4642, 9.1900" e li tratta come coordinate. */
-private fun parseCoordinates(text: String): Pair<Double, Double>? {
-    val m = Regex("""^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$""")
-        .find(text) ?: return null
-    val lat = m.groupValues[1].toDoubleOrNull() ?: return null
-    val lon = m.groupValues[2].toDoubleOrNull() ?: return null
-    if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
-    return lat to lon
 }
 
 private fun safeStart(context: Context, intent: Intent) {

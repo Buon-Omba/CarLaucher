@@ -40,7 +40,7 @@ yay -S android-sdk-cmdline-tools-latest android-sdk-platform-tools android-platf
 export ANDROID_HOME=/opt/android-sdk
 sdkmanager --licenses
 
-./gradlew assembleDebug
+./gradlew testDebugUnitTest lintDebug assembleDebug   # test, lint e APK
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 

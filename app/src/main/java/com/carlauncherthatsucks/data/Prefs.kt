@@ -43,27 +43,33 @@ class Prefs(context: Context) {
 
     fun update(transform: (Settings) -> Settings) = write(transform(_settings.value))
 
-    fun addRecent(destination: String) = update { s ->
-        val d = destination.trim().replace(SEP, " ")
-        if (d.isEmpty()) s
-        else s.copy(recentDestinations = (listOf(d) + s.recentDestinations.filter {
-            !it.equals(d, ignoreCase = true)
-        }).take(MAX_RECENTS))
-    }
+    fun addRecent(destination: String) = update { it.withRecentDestination(destination) }
 
-    fun toggleDock(appId: String) = update { s ->
-        if (appId in s.dockApps) s.copy(dockApps = s.dockApps - appId)
-        else s.copy(dockApps = (s.dockApps + appId).take(MAX_DOCK))
-    }
+    fun toggleDock(appId: String) = update { it.withDockToggled(appId) }
 
     companion object {
         const val MAX_DOCK = 4
-        private const val MAX_RECENTS = 6
-        private const val SEP = "\u001F"
+        const val MAX_RECENTS = 6
+        internal const val SEP = "\u001F"
         private const val KEY_HOME = "home"
         private const val KEY_WORK = "work"
         private const val KEY_SCREEN_ON = "screen_on"
         private const val KEY_DOCK = "dock"
         private const val KEY_RECENTS = "recents"
     }
+}
+
+/** Aggiunge una destinazione in cima alla cronologia, senza duplicati (ignorando maiuscole). */
+fun Settings.withRecentDestination(destination: String): Settings {
+    val d = destination.trim().replace(Prefs.SEP, " ")
+    if (d.isEmpty()) return this
+    val others = recentDestinations.filter { !it.equals(d, ignoreCase = true) }
+    return copy(recentDestinations = (listOf(d) + others).take(Prefs.MAX_RECENTS))
+}
+
+/** Fissa o rimuove un'app dalla barra in basso; oltre [Prefs.MAX_DOCK] app non ne aggiunge altre. */
+fun Settings.withDockToggled(appId: String): Settings = when {
+    appId in dockApps -> copy(dockApps = dockApps - appId)
+    dockApps.size >= Prefs.MAX_DOCK -> this
+    else -> copy(dockApps = dockApps + appId)
 }

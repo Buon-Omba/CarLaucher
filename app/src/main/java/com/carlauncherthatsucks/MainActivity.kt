@@ -1,6 +1,7 @@
 package com.carlauncherthatsucks
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { vm.onLocationPermissionResult() }
 
+    @SuppressLint("SourceLockedOrientationActivity") // richiesta esplicita: solo verticale
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

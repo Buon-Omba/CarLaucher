@@ -64,17 +64,22 @@ object WeatherRepository {
             conn.setRequestProperty("User-Agent", "CarLauncherThatSucks/1.0")
             if (conn.responseCode !in 200..299) error("HTTP ${conn.responseCode}")
             val body = conn.inputStream.bufferedReader().use { it.readText() }
-            val current = JSONObject(body).getJSONObject("current")
-            Weather(
-                temperatureC = current.getDouble("temperature_2m"),
-                code = current.optInt("weather_code", -1),
-                isDay = current.optInt("is_day", 1) == 1,
-                fetchedAt = System.currentTimeMillis(),
-                latitude = lat,
-                longitude = lon,
-            )
+            parseWeather(body, lat, lon, System.currentTimeMillis())
         } finally {
             conn.disconnect()
         }
+    }
+
+    /** Interpreta la risposta JSON di Open-Meteo (`current=temperature_2m,weather_code,is_day`). */
+    fun parseWeather(json: String, lat: Double, lon: Double, now: Long): Weather {
+        val current = JSONObject(json).getJSONObject("current")
+        return Weather(
+            temperatureC = current.getDouble("temperature_2m"),
+            code = current.optInt("weather_code", -1),
+            isDay = current.optInt("is_day", 1) == 1,
+            fetchedAt = now,
+            latitude = lat,
+            longitude = lon,
+        )
     }
 }

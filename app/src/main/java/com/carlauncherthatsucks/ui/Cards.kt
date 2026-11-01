@@ -48,8 +48,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -272,12 +275,7 @@ fun MediaCard(
         }
 
         if (media != null && media.durationMs > 0) {
-            val position by produceState(media.currentPosition(), media) {
-                while (true) {
-                    value = media.currentPosition()
-                    delay(1_000)
-                }
-            }
+            val position by rememberPlaybackPosition(media)
             Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
                 progress = { (position.toFloat() / media.durationMs).coerceIn(0f, 1f) },
@@ -345,13 +343,17 @@ fun MediaCard(
     }
 }
 
-private fun formatDuration(ms: Long): String {
-    val total = ms / 1000
-    val h = total / 3600
-    val m = (total % 3600) / 60
-    val s = total % 60
-    return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, s)
-    else String.format(Locale.US, "%d:%02d", m, s)
+/** Posizione di riproduzione aggiornata ogni secondo. */
+@Composable
+private fun rememberPlaybackPosition(media: MediaState): State<Long> {
+    val position = remember(media) { mutableLongStateOf(media.currentPosition()) }
+    LaunchedEffect(media) {
+        while (true) {
+            position.longValue = media.currentPosition()
+            delay(1_000)
+        }
+    }
+    return position
 }
 
 // ---------------------------------------------------------------- Notifiche

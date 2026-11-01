@@ -122,7 +122,7 @@ class LocationRepository(private val context: Context) {
             val dt = (loc.elapsedRealtimeNanos - prev.elapsedRealtimeNanos) / 1e9
             if (dt in 0.5..10.0) mps = (prev.distanceTo(loc) / dt).toFloat()
         }
-        val kmh = mps?.let { (it * 3.6f).let { v -> if (v < 2f) 0 else Math.round(v) } }
+        val kmh = mps?.let { mpsToKmh(it) }
         _speed.value = SpeedState(
             kmh = kmh,
             hasGpsFix = true,
@@ -132,5 +132,11 @@ class LocationRepository(private val context: Context) {
 
     companion object {
         private const val STALE_MS = 5_000L
+
+        /** m/s → km/h arrotondati; sotto i 2 km/h (rumore del GPS da fermi) mostra 0. */
+        fun mpsToKmh(mps: Float): Int {
+            val kmh = mps * 3.6f
+            return if (kmh < 2f) 0 else Math.round(kmh)
+        }
     }
 }
