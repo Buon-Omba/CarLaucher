@@ -1,65 +1,67 @@
 # CarLauncher
 A vibe-coded phone car launcher with minimal features, because my car doesn't support anything and I don't want to pay for anything.
 
-Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. Niente Google Play Services, niente account, niente chiavi API.
+Android car launcher, **portrait only**, with a dark theme and large buttons. No Google Play Services, no accounts, no API keys required.
 
-## Funzioni
+**Requirements:** Android 8.0 (API 26) or later.
 
-| Sezione | Cosa fa |
+## Features
+
+| Section | What it does |
 |---|---|
-| **Velocità** | km/h letti dal GPS del telefono (con stima da distanza/tempo se il chip non fornisce la velocità). |
-| **Meteo** | Icona + temperatura da [Open-Meteo](https://open-meteo.com) (gratuito, senza chiave). Usa GPS, rete, "fused" e posizione passiva; se non c'è nessuna posizione usa la **città di riserva** impostata nelle impostazioni. Tocca per aggiornare. |
-| **Navigazione (CoMaps)** | Pulsante nel footer: se CoMaps sta navigando apre la **modalità guida** — CoMaps a schermo intero (mappa, percorso, indicazioni) con sopra un pannello trascinabile con velocità e controlli musicali e un tasto per tornare alla home. Altrimenti apre la ricerca della destinazione (e poi la modalità guida). Richiede il permesso "mostra sopra altre app". |
-| **Telefono** | Integrato nel launcher: griglia di contatti preferiti con foto (scelti dalla rubrica) e tastierino. Un tocco = chiamata. |
-| **Assistente vocale** | Pulsante nel footer, configurabile in impostazioni: **Claude** (app, modalità vocale se disponibile), **Gemini** (app, Gemini Live se disponibile) oppure **qualsiasi API compatibile OpenAI** (`/chat/completions`): chat vocale dentro il launcher — riconoscimento vocale di sistema, risposta breve del modello letta ad alta voce, poi riascolta da solo. Preset per OpenAI, Gemini API, Claude API, OpenRouter, Ollama in rete locale. La chiave API resta sul telefono ed è esclusa dai backup. |
-| **Musica** | Copertina, titolo, artista, avanzamento e controlli ⏮ ⏯ ⏭ della sessione multimediale attiva (Spotify, VLC, YouTube Music, radio, …). |
-| **Notifiche** | Ultime notifiche (escluse quelle silenziose) con app, ora, titolo e testo; tocca per aprirle, ✕ per eliminarle, “Cancella tutte”. |
-| **Stile** | "Quadro strumenti di notte" su base Material You: la velocità domina in un quadrante ad arco, superfici grafite tonali, una sola retroilluminazione (il colore dinamico dello sfondo), spie ambra per gli avvisi, numeri in Barlow Semi Condensed (font ispirato alla segnaletica stradale, licenza OFL). Tema chiaro/scuro di sistema. |
-| **Footer** | App · Navigazione · Telefono · fino a 3 app fissate (tieni premuta un'app nel drawer) · Assistente vocale. Le impostazioni sono nel drawer delle app (⚙). |
+| **Speed** | km/h from the phone's GPS (estimated from distance and time if the chip does not report speed). |
+| **Weather** | Icon and temperature from [Open-Meteo](https://open-meteo.com) (free, no key). Uses GPS, network, fused and passive location; if no location is available it falls back to the **backup city** set in the settings. Tap to refresh. |
+| **Navigation (CoMaps)** | Footer button: if CoMaps is navigating, it opens **drive mode** — CoMaps full screen (map, route, directions) with a draggable panel on top showing speed, music controls and a button to return home. Otherwise it opens the destination search (and then drive mode). Requires the "display over other apps" permission. |
+| **Phone** | Built into the launcher: a grid of favourite contacts with photos (picked from the address book) and a dial pad. One tap = call. |
+| **Voice assistant** | Footer button, configurable in the settings: **Claude** (app, voice mode when available), **Gemini** (app, Gemini Live when available) or **any OpenAI-compatible API** (`/chat/completions`): voice chat inside the launcher — system speech recognition, a short model reply read aloud, then it listens again on its own. Presets for OpenAI, Gemini API, Claude API, OpenRouter and Ollama on the local network. The API key stays on the phone and is excluded from backups. |
+| **Music** | Cover art, title, artist, progress and ⏮ ⏯ ⏭ controls for the active media session (Spotify, VLC, YouTube Music, radio, …). |
+| **Notifications** | Latest notifications (silent ones excluded) with app, time, title and text; tap to open, ✕ to dismiss, "Clear all". |
+| **Style** | A "night instrument cluster" on top of Material You: speed dominates in an arc gauge, tonal graphite surfaces, a single backlight (the dynamic wallpaper colour), amber warning lights, numbers in Barlow Semi Condensed (a font inspired by road signage, OFL licence). Follows the system light/dark theme. |
+| **Footer** | Apps · Navigation · Phone · up to 3 pinned apps (long-press an app in the drawer) · Voice assistant. Settings are in the app drawer (⚙). |
 
-L'orientamento è bloccato in verticale (`screenOrientation="portrait"` + richiesta a runtime).
+Orientation is locked to portrait (`screenOrientation="portrait"` plus a runtime request).
 
-## Primo avvio
+## First launch
 
-1. Concedi il permesso **Posizione** (velocità e meteo).
-2. Concedi l'**Accesso alle notifiche** (serve per notifiche, controlli musica e manovre di CoMaps).
-   Su Android 13+ con APK installato a mano: *Impostazioni → App → Car Launcher → ⋮ → Consenti impostazioni con restrizioni*, poi riprova.
-3. *Impostazioni → Imposta come launcher predefinito* e scegli **Car Launcher**.
-4. Opzionale: in impostazioni (drawer app → ⚙) imposta la **città di riserva** per il meteo.
+1. Grant the **Location** permission (speed and weather).
+2. Grant **Notification access** (needed for notifications, music controls and CoMaps maneuvers).
+   On Android 13+ with a manually installed APK: *Settings → Apps → Car Launcher → ⋮ → Allow restricted settings*, then try again.
+3. *Settings → Set as default launcher* and choose **Car Launcher**.
+4. Optional: in the settings (app drawer → ⚙) set the **backup city** for the weather.
 
-CoMaps va installato a parte (es. da [F-Droid](https://f-droid.org/packages/app.comaps.fdroid/)). Le destinazioni vengono passate a CoMaps tramite URI `geo:`.
+CoMaps must be installed separately (e.g. from [F-Droid](https://f-droid.org/packages/app.comaps.fdroid/)). Destinations are passed to CoMaps through `geo:` URIs.
 
-## Scaricare l'APK
+## Download the APK
 
-Ogni push viene compilato da GitHub Actions (*Actions → Build APK → Artifacts*).
+Every push is built by GitHub Actions (*Actions → Build APK → Artifacts*).
 
-## Compilare in locale (Arch Linux e derivate)
+## Build locally (Arch Linux and derivatives)
 
 ```bash
 sudo pacman -S --needed jdk17-openjdk android-tools
-# SDK Android dall'AUR (es. con yay)
+# Android SDK from the AUR (e.g. with yay)
 yay -S android-sdk-cmdline-tools-latest android-sdk-platform-tools android-platform
 export ANDROID_HOME=/opt/android-sdk
 sdkmanager --licenses
 
-./gradlew testDebugUnitTest lintDebug assembleDebug   # test, lint e APK
-./gradlew recordPaparazziDebug                        # screenshot in app/src/test/snapshots/images
+./gradlew testDebugUnitTest lintDebug assembleDebug   # tests, lint and APK
+./gradlew recordPaparazziDebug                        # screenshots in app/src/test/snapshots/images
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Struttura
+## Project structure
 
 ```
 app/src/main/java/com/carlauncherthatsucks/
-├── MainActivity.kt            # activity HOME, solo verticale
-├── LauncherViewModel.kt       # avvia/ferma GPS, media, meteo
+├── MainActivity.kt            # HOME activity, portrait only
+├── LauncherViewModel.kt       # starts/stops GPS, media, weather
 ├── data/
-│   ├── CarNotificationListener.kt  # notifiche + manovre CoMaps
+│   ├── CarNotificationListener.kt  # notifications + CoMaps maneuvers
 │   ├── NotificationStore.kt
 │   ├── MediaRepository.kt     # MediaSessionManager
-│   ├── LocationRepository.kt  # velocità GPS (LocationManager)
+│   ├── LocationRepository.kt  # GPS speed (LocationManager)
 │   ├── WeatherRepository.kt   # Open-Meteo
-│   ├── CoMaps.kt              # intent verso CoMaps
+│   ├── CoMaps.kt              # intents to CoMaps
 │   ├── AppsRepository.kt
 │   └── Prefs.kt
 └── ui/                        # Jetpack Compose
