@@ -1,5 +1,5 @@
 # CarLauncher
-A vibe-coded phone car laucher that as minimal feature because my car doesn't support anything ad i don't want to pay anything.
+A vibe-coded phone car launcher with minimal features, because my car doesn't support anything and I don't want to pay for anything.
 
 Launcher Android per l'auto, **solo verticale**, tema scuro e pulsanti grandi. Niente Google Play Services, niente account, niente chiavi API.
 
