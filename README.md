@@ -5,6 +5,10 @@ Android car launcher, **portrait only**, with a dark theme and large buttons. No
 
 **Requirements:** Android 8.0 (API 26) or later.
 
+<p align="center">
+  <img src="docs/screenshot-home.png" alt="CarLauncher home screen: speedometer, weather, media player and notifications" width="300">
+</p>
+
 ## Features
 
 | Section | What it does |
